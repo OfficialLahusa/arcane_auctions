@@ -251,6 +251,7 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
         _amountBox = new EditBox(font, this.width / 2 - 30, this.height / 2 - 14, 60, 14, Component.literal(""));
         _amountBox.setHint(Component.literal("0"));
+        _amountBox.setTooltip(Tooltip.create(Component.literal("Transaction amount\nNegative: Withdraw from obelisk to player.\nPositive: Deposit from player to obelisk.")));
         _amountBox.setFilter((val) -> {
             // Allow ""/"-"/"+" so a leading - sign can be added while editing
             if(val.isEmpty() || val.equals("-") || val.equals("+")) return true;
