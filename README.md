@@ -1,4 +1,4 @@
-# Superior Ballistics
+# Arcane Auctions
  A minecraft forge mod focused on experience-based player trade
  
  ## Dependencies
