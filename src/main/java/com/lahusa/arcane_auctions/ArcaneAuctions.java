@@ -2,6 +2,7 @@ package com.lahusa.arcane_auctions;
 
 import com.lahusa.arcane_auctions.block.ExperienceObeliskBlock;
 import com.lahusa.arcane_auctions.block.entity.ExperienceObeliskBlockEntity;
+import com.lahusa.arcane_auctions.block.renderer.ExperienceObeliskBlockEntityRenderer;
 import com.lahusa.arcane_auctions.gui.menu.ExperienceObeliskMenu;
 import com.lahusa.arcane_auctions.gui.screen.ExperienceObeliskScreen;
 import com.lahusa.arcane_auctions.net.ArcaneAuctionsPacketHandler;
@@ -29,6 +30,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.CustomizeGuiOverlayEvent;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
@@ -146,6 +148,12 @@ public class ArcaneAuctions {
             event.enqueueWork(
                     () -> MenuScreens.register(EXPERIENCE_OBELISK_MENU.get(), ExperienceObeliskScreen::new)
             );
+        }
+
+        @SubscribeEvent
+        public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
+            event.registerBlockEntityRenderer(EXPERIENCE_OBELISK_BLOCK_ENTITY.get(), ExperienceObeliskBlockEntityRenderer::new);
+            LOGGER.info("REGISTERED RENDERER");
         }
     }
 

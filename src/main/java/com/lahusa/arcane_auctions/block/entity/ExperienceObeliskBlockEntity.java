@@ -17,8 +17,18 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.object.PlayState;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class ExperienceObeliskBlockEntity extends BlockEntity {
+public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBlockEntity {
+    protected static final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("idle");
+    private final AnimatableInstanceCache _cache = GeckoLibUtil.createInstanceCache(this);
     private int _experiencePoints;
 
     public ExperienceObeliskBlockEntity(BlockPos pos, BlockState state) {
@@ -96,5 +106,19 @@ public class ExperienceObeliskBlockEntity extends BlockEntity {
         level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
 
         return true;
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
+        controllerRegistrar.add(new AnimationController<>(this, this::idleAnimController));
+    }
+
+    protected <E extends ExperienceObeliskBlockEntity> PlayState idleAnimController(final AnimationState<E> state) {
+        return state.setAndContinue(IDLE_ANIM);
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return this._cache;
     }
 }
