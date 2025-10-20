@@ -12,14 +12,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.commands.ExperienceCommand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -27,7 +24,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.font.NumericShaper;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,12 +36,21 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
     private final List<Button> _buttons = new ArrayList<>();
     private EditBox _amountBox;
 
+    /*
+    0: Transaction
+    1: Configuration
+    2: Log
+     */
+    private int _selectedTab = 0;
+    private final int _tabOffsetY;
+
     public ExperienceObeliskScreen(ExperienceObeliskMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
         this.imageWidth = 200;
         this.imageHeight = 116;
         this._clientLevel = menu.level;
         this._inventory = inv;
+        this._tabOffsetY = (this.imageHeight - 3*26) / 2;
     }
 
     @Override
@@ -56,32 +61,24 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
     @Override
     protected void renderBg(GuiGraphics gfx, float p_97788_, int p_97789_, int p_97790_) {
-        Minecraft instance = Minecraft.getInstance();
-
-        BlockPos pos = menu.getBlockPos();
-        int xpPoints = 0;
-        if (pos != null && _clientLevel.getBlockEntity(pos) instanceof ExperienceObeliskBlockEntity obeliskEntity) {
-            xpPoints = obeliskEntity.getExperiencePoints();
-        }
-
         // Draw unselected tabs
-        int tabOffsetY = (this.imageHeight - 3*26) / 2;
-        int selectedTab = xpPoints % 3;
         for (int tabIdx = 0; tabIdx < 3; tabIdx++) {
-            if(tabIdx == selectedTab) continue;
-            gfx.blit(BACKGROUND_LOCATION, this.leftPos-32+4, this.topPos+tabOffsetY+tabIdx*26, 0, 116, 32, 26);
-            gfx.renderItem(getTabIconItem(tabIdx).getDefaultInstance(), this.leftPos-32+4+8, this.topPos+tabOffsetY+tabIdx*26+5);
+            if(tabIdx == _selectedTab) continue;
+            gfx.blit(BACKGROUND_LOCATION, this.leftPos-32+4, this.topPos+_tabOffsetY+tabIdx*26, 0, 116, 32, 26);
+            gfx.renderItem(getTabIconItem(tabIdx).getDefaultInstance(), this.leftPos-32+4+8, this.topPos+_tabOffsetY+tabIdx*26+5);
         }
 
         // Draw main bg
         gfx.blit(BACKGROUND_LOCATION, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
 
-        // Draw stored amount text field backdrop
-        gfx.blit(BACKGROUND_LOCATION, this.leftPos+47, this.topPos+21, 64, 116, 106, 18);
+        if (_selectedTab == 0) {
+            // Draw stored amount text field backdrop
+            gfx.blit(BACKGROUND_LOCATION, this.leftPos+47, this.topPos+21, 64, 116, 106, 18);
+        }
 
         // Draw selected tab
-        gfx.blit(BACKGROUND_LOCATION, this.leftPos-32+4, this.topPos+tabOffsetY+selectedTab*26, 32, 116, 32, 26);
-        gfx.renderItem(getTabIconItem(selectedTab).getDefaultInstance(), this.leftPos-32+4+8, this.topPos+tabOffsetY+selectedTab*26+5);
+        gfx.blit(BACKGROUND_LOCATION, this.leftPos-32+4, this.topPos+_tabOffsetY+_selectedTab*26, 32, 116, 32, 26);
+        gfx.renderItem(getTabIconItem(_selectedTab).getDefaultInstance(), this.leftPos-32+4+8, this.topPos+_tabOffsetY+_selectedTab*26+5);
     }
 
     @Override
@@ -95,6 +92,11 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
             button.setFocused(false);
         }
 
+        String titleText = this.title.getString();
+        gfx.drawString(this.font, titleText, this.imageWidth / 2 - this.font.width(titleText) / 2, this.titleLabelY, 0x404040, false);
+
+        if (_selectedTab != 0) return;
+
         Minecraft instance = Minecraft.getInstance();
 
         BlockPos pos = menu.getBlockPos();
@@ -102,9 +104,6 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         if (pos != null && _clientLevel.getBlockEntity(pos) instanceof ExperienceObeliskBlockEntity obeliskEntity) {
             xpPoints = obeliskEntity.getExperiencePoints();
         }
-
-        String titleText = this.title.getString();
-        gfx.drawString(this.font, titleText, this.imageWidth / 2 - this.font.width(titleText) / 2, this.titleLabelY, 0x404040, false);
 
         String xpText = NumberFormatter.intToString(xpPoints) + " stored";
         gfx.blit(XP_OVERLAY_LOCATION, this.imageWidth / 2 - (this.font.width(xpText) + 8) / 2, 6+20, 0, 0, 0,10, 10, 10, 10);
@@ -121,6 +120,46 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
             case 2 -> Items.BOOK;
             default -> throw new IllegalArgumentException("tabIdx must be in range [0-2].");
         };
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0) {
+            for (int tabIdx = 0; tabIdx < 3; tabIdx++) {
+                if (isPointOnTab(tabIdx, mouseX, mouseY)) {
+                    return true;
+                }
+            }
+        }
+
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0) {
+            for (int tabIdx = 0; tabIdx < 3; tabIdx++) {
+                if (isPointOnTab(tabIdx, mouseX, mouseY)) {
+                    changeTab(tabIdx);
+                    return true;
+                }
+            }
+        }
+
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    private void changeTab(int tabIdx) {
+        _selectedTab = tabIdx;
+        initWidgets();
+    }
+
+    private boolean isPointOnTab(int tabIdx, double mouseX, double mouseY) {
+        int xMin = this.leftPos-32+4;
+        int yMin = this.topPos+_tabOffsetY+tabIdx*26;
+        int xMax = xMin + 32;
+        int yMax = yMin + 26;
+        return mouseX >= xMin && mouseX <= xMax && mouseY >= yMin && mouseY <= yMax;
     }
 
     @Override
@@ -189,6 +228,9 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
     private void initWidgets() {
         _buttons.clear();
+        clearWidgets();
+
+        if (_selectedTab != 0) return;
 
         int buttonY = this.height / 2 + 6;
 
@@ -315,6 +357,8 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
             }
         });
 
+        addRenderableWidget(_amountBox);
+
         _buttons.add(reset);
         _buttons.add(addOne);
         _buttons.add(removeOne);
@@ -329,7 +373,5 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         for(Button button : _buttons) {
             addRenderableWidget(button);
         }
-
-        addRenderableWidget(_amountBox);
     }
 }
