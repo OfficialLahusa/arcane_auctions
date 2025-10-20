@@ -54,6 +54,6 @@ public class ExperienceAccountSavedData extends SavedData {
     }
 
     public static ExperienceAccountSavedData getOrCreate(MinecraftServer server) {
-        server.overworld().getDataStorage().computeIfAbsent(ExperienceAccountSavedData::load, ExperienceAccountSavedData::create, "arcane-auctions-accounts");
+        return server.overworld().getDataStorage().computeIfAbsent(ExperienceAccountSavedData::load, ExperienceAccountSavedData::create, "arcane-auctions-accounts");
     }
 }
