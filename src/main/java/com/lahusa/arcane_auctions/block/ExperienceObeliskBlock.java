@@ -4,8 +4,10 @@ import com.lahusa.arcane_auctions.ArcaneAuctions;
 import com.lahusa.arcane_auctions.block.entity.ExperienceObeliskBlockEntity;
 import com.lahusa.arcane_auctions.gui.menu.ExperienceObeliskMenu;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
@@ -23,10 +25,14 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
+
+import static net.minecraft.world.level.block.EnchantmentTableBlock.BOOKSHELF_OFFSETS;
+import static net.minecraft.world.level.block.EnchantmentTableBlock.isValidBookShelf;
 
 public class ExperienceObeliskBlock extends Block implements EntityBlock {
 
@@ -58,6 +64,25 @@ public class ExperienceObeliskBlock extends Block implements EntityBlock {
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource randomSource) {
+        super.animateTick(state, level, pos, randomSource);
+
+        Vec3 dir = new Vec3(2 * randomSource.nextFloat() - 1, 2 * randomSource.nextFloat() - 1, 2 * randomSource.nextFloat() - 1);
+        dir = dir.normalize();
+
+        if (randomSource.nextInt(8) == 0) {
+            level.addParticle(
+                    ParticleTypes.END_ROD,
+                    (double) pos.getX() + 0.5 + 0.35 * dir.x,
+                    (double) pos.getY() + 0.65 + 0.35 * dir.y,
+                    (double) pos.getZ() + 0.5 + 0.35 * dir.z,
+                    0,
+                    0,
+                    0
+            );
+        }
+    }
+
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
@@ -72,5 +97,10 @@ public class ExperienceObeliskBlock extends Block implements EntityBlock {
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter getter, BlockPos pos, CollisionContext collisionContext) {
         return SHAPE;
+    }
+
+    // Used for registration properties
+    public static int getLightLevelForState(BlockState state) {
+        return 10;
     }
 }

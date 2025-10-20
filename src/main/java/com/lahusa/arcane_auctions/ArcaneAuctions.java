@@ -65,7 +65,11 @@ public class ArcaneAuctions {
     public static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(ForgeRegistries.MENU_TYPES, MODID);
 
     // Creates a new Block with the id "arcane_auctions:example_block", combining the namespace and path
-    public static final RegistryObject<Block> EXPERIENCE_OBELISK_BLOCK = BLOCKS.register("experience_obelisk", () -> new ExperienceObeliskBlock(BlockBehaviour.Properties.of().mapColor(MapColor.STONE)));
+    public static final RegistryObject<Block> EXPERIENCE_OBELISK_BLOCK = BLOCKS.register("experience_obelisk", () -> new ExperienceObeliskBlock(
+            BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .lightLevel(ExperienceObeliskBlock::getLightLevelForState)
+    ));
     // Creates a new BlockItem with the id "arcane_auctions:example_block", combining the namespace and path
     public static final RegistryObject<Item> EXPERIENCE_OBELISK_BLOCK_ITEM = ITEMS.register("experience_obelisk", () -> new BlockItem(EXPERIENCE_OBELISK_BLOCK.get(), new Item.Properties()));
     public static final RegistryObject<BlockEntityType<ExperienceObeliskBlockEntity>> EXPERIENCE_OBELISK_BLOCK_ENTITY = BLOCK_ENTITY_TYPES.register("experience_obelisk", () -> BlockEntityType.Builder.of(ExperienceObeliskBlockEntity::new, EXPERIENCE_OBELISK_BLOCK.get()).build(null));
