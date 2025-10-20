@@ -7,6 +7,7 @@ import com.lahusa.arcane_auctions.net.ArcaneAuctionsPacketHandler;
 import com.lahusa.arcane_auctions.net.ExperienceObeliskTransactionC2SPacket;
 import com.lahusa.arcane_auctions.util.ExperienceConverter;
 import com.lahusa.arcane_auctions.util.NumberFormatter;
+import com.lahusa.arcane_auctions.util.UserNameConverter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -22,10 +23,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceObeliskMenu> {
     private static final ResourceLocation BACKGROUND_LOCATION = ResourceLocation.fromNamespaceAndPath(ArcaneAuctions.MODID, "textures/gui/experience_obelisk.png");
@@ -94,10 +97,16 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         Minecraft instance = Minecraft.getInstance();
 
         BlockPos pos = menu.getBlockPos();
-        int xpPoints = 0;
-        if (pos != null && _clientLevel.getBlockEntity(pos) instanceof ExperienceObeliskBlockEntity obeliskEntity) {
-            xpPoints = obeliskEntity.getExperiencePoints();
-        }
+        assert pos != null;
+
+        BlockEntity blockEntity = _clientLevel.getBlockEntity(pos);
+        if (!(blockEntity instanceof ExperienceObeliskBlockEntity))
+            throw new IllegalStateException("Missing experience obelisk block entity");
+
+        ExperienceObeliskBlockEntity obeliskEntity = (ExperienceObeliskBlockEntity) blockEntity;
+        int xpPoints = obeliskEntity.getExperiencePoints();
+        UUID owner = obeliskEntity.getOwner();
+        boolean isOwner = owner != null && owner.equals(_inventory.player.getUUID());
 
         // Transaction tab
         if (_selectedTab == 0) {
@@ -107,6 +116,25 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
             gfx.drawString(instance.font, "Deposit", this.imageWidth / 2 + 60 - (this.font.width("Deposit")) / 2, 30 + this.imageHeight / 2, 0x404040, false);
             gfx.drawString(instance.font, "Withdraw", this.imageWidth / 2 - 60 - (this.font.width("Withdraw")) / 2, 30 + this.imageHeight / 2, 0x404040, false);
+        }
+        // Configuration tab
+        else if(_selectedTab == 1) {
+            String ownerText = "Owner: ";
+
+            // No owner set
+            if (owner == null) {
+                ownerText += "None";
+            }
+            // Client player is owner
+            else if (isOwner) {
+                ownerText += _inventory.player.getName().getString();
+            }
+            // Fetch username for UUID
+            else {
+                ownerText += UserNameConverter.getUserName(owner);
+            }
+
+            gfx.drawString(instance.font, ownerText, this.imageWidth / 2 - this.font.width(ownerText) / 2, 6+20, 0x404040, false);
         }
 
         // Render tab tooltips
