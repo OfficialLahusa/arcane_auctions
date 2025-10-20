@@ -60,7 +60,7 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
     }
 
     @Override
-    protected void renderBg(GuiGraphics gfx, float p_97788_, int p_97789_, int p_97790_) {
+    protected void renderBg(@NotNull GuiGraphics gfx, float partialTick, int mouseX, int mouseY) {
         // Draw unselected tabs
         for (int tabIdx = 0; tabIdx < 3; tabIdx++) {
             if(tabIdx == _selectedTab) continue;
@@ -83,10 +83,6 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
     @Override
     protected void renderLabels(@NotNull GuiGraphics gfx, int mouseX, int mouseY) {
-        //super.renderLabels(gfx, p_282681_, p_283686_);
-        //p_281635_.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 0x404040, false);
-        //p_281635_.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 0x404040, false);
-
         // Reset buttons
         for(Button button : _buttons) {
             button.setFocused(false);
@@ -94,8 +90,6 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
         String titleText = this.title.getString();
         gfx.drawString(this.font, titleText, this.imageWidth / 2 - this.font.width(titleText) / 2, this.titleLabelY, 0x404040, false);
-
-        if (_selectedTab != 0) return;
 
         Minecraft instance = Minecraft.getInstance();
 
@@ -105,12 +99,23 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
             xpPoints = obeliskEntity.getExperiencePoints();
         }
 
-        String xpText = NumberFormatter.intToString(xpPoints) + " stored";
-        gfx.blit(XP_OVERLAY_LOCATION, this.imageWidth / 2 - (this.font.width(xpText) + 8) / 2, 6+20, 0, 0, 0,10, 10, 10, 10);
-        gfx.drawString(instance.font, xpText, this.imageWidth / 2 - (this.font.width(xpText) + 8) / 2 + 8, 6+20, 0x80FF20);
+        // Transaction tab
+        if (_selectedTab == 0) {
+            String xpText = NumberFormatter.intToString(xpPoints) + " stored";
+            gfx.blit(XP_OVERLAY_LOCATION, this.imageWidth / 2 - (this.font.width(xpText) + 8) / 2, 6+20, 0, 0, 0,10, 10, 10, 10);
+            gfx.drawString(instance.font, xpText, this.imageWidth / 2 - (this.font.width(xpText) + 8) / 2 + 8, 6+20, 0x80FF20);
 
-        gfx.drawString(instance.font, "Deposit", this.imageWidth / 2 + 60 - (this.font.width("Deposit")) / 2, 30 + this.imageHeight / 2, 0x404040, false);
-        gfx.drawString(instance.font, "Withdraw", this.imageWidth / 2 - 60 - (this.font.width("Withdraw")) / 2, 30 + this.imageHeight / 2, 0x404040, false);
+            gfx.drawString(instance.font, "Deposit", this.imageWidth / 2 + 60 - (this.font.width("Deposit")) / 2, 30 + this.imageHeight / 2, 0x404040, false);
+            gfx.drawString(instance.font, "Withdraw", this.imageWidth / 2 - 60 - (this.font.width("Withdraw")) / 2, 30 + this.imageHeight / 2, 0x404040, false);
+        }
+
+        // Render tab tooltips
+        for (int tabIdx = 0; tabIdx < 3; tabIdx++) {
+            if (isPointOnTab(tabIdx, mouseX, mouseY)) {
+                gfx.renderTooltip(instance.font, getTabTooltip(tabIdx), mouseX - this.leftPos, mouseY - this.topPos);
+                break;
+            }
+        }
     }
 
     private Item getTabIconItem(int tabIdx) {
@@ -118,6 +123,15 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
             case 0 -> Items.EXPERIENCE_BOTTLE;
             case 1 -> Items.ENDER_EYE;
             case 2 -> Items.BOOK;
+            default -> throw new IllegalArgumentException("tabIdx must be in range [0-2].");
+        };
+    }
+
+    private Component getTabTooltip(int tabIdx) {
+        return switch (tabIdx) {
+            case 0 -> Component.literal("Transaction");
+            case 1 -> Component.literal("Configuration");
+            case 2 -> Component.literal("Log");
             default -> throw new IllegalArgumentException("tabIdx must be in range [0-2].");
         };
     }
@@ -230,8 +244,22 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         _buttons.clear();
         clearWidgets();
 
-        if (_selectedTab != 0) return;
+        switch (_selectedTab) {
+            case 0:
+                initTransactionWidgets();
+                break;
+            case 1:
+                initConfigurationWidgets();
+                break;
+            case 2:
+                initLogWidgets();
+                break;
+            default:
+                throw new IllegalStateException("_selectedTab must be in range [0-2].");
+        }
+    }
 
+    private void initTransactionWidgets() {
         int buttonY = this.height / 2 + 6;
 
         Button reset = Button.builder(
@@ -373,5 +401,13 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         for(Button button : _buttons) {
             addRenderableWidget(button);
         }
+    }
+
+    private void initConfigurationWidgets() {
+
+    }
+
+    private void initLogWidgets() {
+
     }
 }
