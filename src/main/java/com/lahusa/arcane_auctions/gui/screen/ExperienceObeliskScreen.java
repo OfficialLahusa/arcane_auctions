@@ -22,6 +22,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.commands.ExperienceCommand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,7 +56,29 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
     @Override
     protected void renderBg(GuiGraphics gfx, float p_97788_, int p_97789_, int p_97790_) {
+        Minecraft instance = Minecraft.getInstance();
+
+        BlockPos pos = menu.getBlockPos();
+        int xpPoints = 0;
+        if (pos != null && _clientLevel.getBlockEntity(pos) instanceof ExperienceObeliskBlockEntity obeliskEntity) {
+            xpPoints = obeliskEntity.getExperiencePoints();
+        }
+
+        // Draw unselected tabs
+        int tabOffsetY = (this.imageHeight - 3*26) / 2;
+        int selectedTab = xpPoints % 3;
+        for (int tabIdx = 0; tabIdx < 3; tabIdx++) {
+            if(tabIdx == selectedTab) continue;
+            gfx.blit(BACKGROUND_LOCATION, this.leftPos-32+4, this.topPos+tabOffsetY+tabIdx*26, 0, 116, 32, 26);
+            gfx.renderItem(getTabIconItem(tabIdx).getDefaultInstance(), this.leftPos-32+4+8, this.topPos+tabOffsetY+tabIdx*26+5);
+        }
+
+        // Draw main bg
         gfx.blit(BACKGROUND_LOCATION, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
+
+        // Draw selected tab
+        gfx.blit(BACKGROUND_LOCATION, this.leftPos-32+4, this.topPos+tabOffsetY+selectedTab*26, 32, 116, 32, 26);
+        gfx.renderItem(getTabIconItem(selectedTab).getDefaultInstance(), this.leftPos-32+4+8, this.topPos+tabOffsetY+selectedTab*26+5);
     }
 
     @Override
@@ -85,6 +109,15 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
         gfx.drawString(instance.font, "Deposit", this.imageWidth / 2 + 60 - (this.font.width("Deposit")) / 2, 30 + this.imageHeight / 2, 0x404040, false);
         gfx.drawString(instance.font, "Withdraw", this.imageWidth / 2 - 60 - (this.font.width("Withdraw")) / 2, 30 + this.imageHeight / 2, 0x404040, false);
+    }
+
+    private Item getTabIconItem(int tabIdx) {
+        return switch (tabIdx) {
+            case 0 -> Items.EXPERIENCE_BOTTLE;
+            case 1 -> Items.ENDER_EYE;
+            case 2 -> Items.BOOK;
+            default -> throw new IllegalArgumentException("tabIdx must be in range [0-2].");
+        };
     }
 
     @Override
