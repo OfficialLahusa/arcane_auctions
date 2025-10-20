@@ -76,6 +76,9 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         // Draw main bg
         gfx.blit(BACKGROUND_LOCATION, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
 
+        // Draw stored amount text field backdrop
+        gfx.blit(BACKGROUND_LOCATION, this.leftPos+47, this.topPos+21, 64, 116, 106, 18);
+
         // Draw selected tab
         gfx.blit(BACKGROUND_LOCATION, this.leftPos-32+4, this.topPos+tabOffsetY+selectedTab*26, 32, 116, 32, 26);
         gfx.renderItem(getTabIconItem(selectedTab).getDefaultInstance(), this.leftPos-32+4+8, this.topPos+tabOffsetY+selectedTab*26+5);
