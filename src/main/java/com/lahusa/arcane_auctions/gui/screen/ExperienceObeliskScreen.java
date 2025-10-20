@@ -11,9 +11,7 @@ import com.lahusa.arcane_auctions.util.UserNameConverter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -26,8 +24,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceObeliskMenu> {
@@ -36,7 +32,6 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
     private final Inventory _inventory;
     private final Level _clientLevel;
-    private final List<Button> _buttons = new ArrayList<>();
     private EditBox _amountBox;
 
     /*
@@ -60,6 +55,18 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
     protected void init() {
         super.init();
         initWidgets();
+    }
+
+    private ExperienceObeliskBlockEntity getBlockEntity() {
+        BlockPos pos = menu.getBlockPos();
+        assert pos != null;
+
+        BlockEntity blockEntity = _clientLevel.getBlockEntity(pos);
+
+        if (!(blockEntity instanceof ExperienceObeliskBlockEntity))
+            throw new IllegalStateException("Missing experience obelisk block entity");
+
+        return (ExperienceObeliskBlockEntity) blockEntity;
     }
 
     @Override
@@ -87,23 +94,18 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
     @Override
     protected void renderLabels(@NotNull GuiGraphics gfx, int mouseX, int mouseY) {
         // Reset buttons
-        for(Button button : _buttons) {
-            button.setFocused(false);
+        for(Renderable renderable : renderables) {
+            if (renderable instanceof AbstractButton button) {
+                button.setFocused(false);
+            }
         }
+
+        Minecraft instance = Minecraft.getInstance();
 
         String titleText = this.title.getString();
         gfx.drawString(this.font, titleText, this.imageWidth / 2 - this.font.width(titleText) / 2, this.titleLabelY, 0x404040, false);
 
-        Minecraft instance = Minecraft.getInstance();
-
-        BlockPos pos = menu.getBlockPos();
-        assert pos != null;
-
-        BlockEntity blockEntity = _clientLevel.getBlockEntity(pos);
-        if (!(blockEntity instanceof ExperienceObeliskBlockEntity))
-            throw new IllegalStateException("Missing experience obelisk block entity");
-
-        ExperienceObeliskBlockEntity obeliskEntity = (ExperienceObeliskBlockEntity) blockEntity;
+        ExperienceObeliskBlockEntity obeliskEntity = getBlockEntity();
         int xpPoints = obeliskEntity.getExperiencePoints();
         UUID owner = obeliskEntity.getOwner();
         boolean isOwner = owner != null && owner.equals(_inventory.player.getUUID());
@@ -232,13 +234,10 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
     }
 
     private void clampBoxAmount() {
-        // Determine min value by checking orbs stored in obelisk
-        int minValue = 0;
+        ExperienceObeliskBlockEntity obeliskEntity = getBlockEntity();
 
-        BlockPos pos = menu.getBlockPos();
-        if (pos != null && _clientLevel.getBlockEntity(pos) instanceof ExperienceObeliskBlockEntity obeliskEntity) {
-            minValue = -obeliskEntity.getExperiencePoints();
-        }
+        // Determine min value by checking orbs stored in obelisk
+        int minValue = -obeliskEntity.getExperiencePoints();
 
         // Determine max value by checking orbs stored in player
         Player player = _inventory.player;
@@ -269,7 +268,6 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
     }
 
     private void initWidgets() {
-        _buttons.clear();
         clearWidgets();
 
         switch (_selectedTab) {
@@ -413,26 +411,57 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
             }
         });
 
+        addRenderableWidget(reset);
+        addRenderableWidget(addOne);
+        addRenderableWidget(removeOne);
+        addRenderableWidget(addTen);
+        addRenderableWidget(removeTen);
+        addRenderableWidget(addHundred);
+        addRenderableWidget(removeHundred);
+        addRenderableWidget(addAll);
+        addRenderableWidget(removeAll);
+        addRenderableWidget(confirmTransfer);
+
         addRenderableWidget(_amountBox);
-
-        _buttons.add(reset);
-        _buttons.add(addOne);
-        _buttons.add(removeOne);
-        _buttons.add(addTen);
-        _buttons.add(removeTen);
-        _buttons.add(addHundred);
-        _buttons.add(removeHundred);
-        _buttons.add(addAll);
-        _buttons.add(removeAll);
-        _buttons.add(confirmTransfer);
-
-        for(Button button : _buttons) {
-            addRenderableWidget(button);
-        }
     }
 
     private void initConfigurationWidgets() {
+        ExperienceObeliskBlockEntity obeliskEntity = getBlockEntity();
 
+
+
+        CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> depositPermissionButton = CycleButton.builder(ExperienceObeliskScreen::getCycleButtonLabel)
+                .withValues(ExperienceObeliskBlockEntity.TransactionPermissions.values())
+                .withInitialValue(obeliskEntity.getDepositPermissions())
+                .create(this.width / 2 - 60, this.height / 2 - 20, 120, 20,
+                        Component.literal("Deposit"),
+                        ExperienceObeliskScreen::onCycleButtonChange);
+
+        CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> withdrawalPermissionButton = CycleButton.builder(ExperienceObeliskScreen::getCycleButtonLabel)
+                .withValues(ExperienceObeliskBlockEntity.TransactionPermissions.values())
+                .withInitialValue(obeliskEntity.getWithdrawPermissions())
+                .create(this.width / 2 - 60, this.height / 2, 120, 20,
+                        Component.literal("Withdraw"),
+                        ExperienceObeliskScreen::onCycleButtonChange);
+
+        CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> logPermissionButton = CycleButton.builder(ExperienceObeliskScreen::getCycleButtonLabel)
+                .withValues(ExperienceObeliskBlockEntity.TransactionPermissions.values())
+                .withInitialValue(obeliskEntity.getDepositPermissions()) // TODO
+                .create(this.width / 2 - 60, this.height / 2 + 20, 120, 20,
+                        Component.literal("Log View"),
+                        ExperienceObeliskScreen::onCycleButtonChange);
+
+        addRenderableWidget(depositPermissionButton);
+        addRenderableWidget(withdrawalPermissionButton);
+        addRenderableWidget(logPermissionButton);
+    }
+
+    private static Component getCycleButtonLabel(ExperienceObeliskBlockEntity.TransactionPermissions value) {
+        return Component.literal(value.name());
+    }
+
+    private static void onCycleButtonChange(CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> cycleButton, ExperienceObeliskBlockEntity.TransactionPermissions value) {
+        System.out.println(value);
     }
 
     private void initLogWidgets() {

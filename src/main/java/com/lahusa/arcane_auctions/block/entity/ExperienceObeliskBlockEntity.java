@@ -34,21 +34,24 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
     private int _experiencePoints;
     private UUID _owner;
 
+    public enum TransactionPermissions {
+        Everyone,
+        Whitelist,
+        Owner
+    }
+
+    private TransactionPermissions _withdrawPermissions;
+    private TransactionPermissions _depositPermissions;
+    private TransactionPermissions _logPermissions;
+
     public ExperienceObeliskBlockEntity(BlockPos pos, BlockState state) {
         super(ArcaneAuctions.EXPERIENCE_OBELISK_BLOCK_ENTITY.get(), pos, state);
 
         _experiencePoints = 1000;
         _owner = null;
-    }
-
-    @Override
-    protected void saveAdditional(@NotNull CompoundTag tag) {
-        super.saveAdditional(tag);
-        tag.putInt("experience_points", _experiencePoints);
-
-        if (_owner != null) {
-            tag.putUUID("owner", _owner);
-        }
+        _withdrawPermissions = TransactionPermissions.Everyone;
+        _depositPermissions = TransactionPermissions.Everyone;
+        _logPermissions = TransactionPermissions.Everyone;
     }
 
     @Override
@@ -56,21 +59,51 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
         super.load(tag);
         _experiencePoints = tag.getInt("experience_points");
 
-        if (tag.contains("owner")) {
+        if (tag.contains("owner"))
             _owner = tag.getUUID("owner");
-        }
-        else {
+        else
             _owner = null;
+
+        if (tag.contains("withdraw_permissions"))
+            _withdrawPermissions = TransactionPermissions.valueOf(tag.getString("withdraw_permissions"));
+        else
+            _withdrawPermissions = TransactionPermissions.Everyone;
+
+        if (tag.contains("deposit_permissions"))
+            _depositPermissions = TransactionPermissions.valueOf(tag.getString("deposit_permissions"));
+        else
+            _depositPermissions = TransactionPermissions.Everyone;
+
+        if (tag.contains("log_permissions"))
+            _logPermissions = TransactionPermissions.valueOf(tag.getString("log_permissions"));
+        else
+            _logPermissions = TransactionPermissions.Everyone;
+    }
+
+    protected void save(CompoundTag tag) {
+        tag.putInt("experience_points", _experiencePoints);
+
+        if (_owner != null) {
+            tag.putUUID("owner", _owner);
         }
+
+        tag.putString("withdraw_permissions", _withdrawPermissions.name());
+        tag.putString("deposit_permissions", _depositPermissions.name());
+        tag.putString("log_permissions", _logPermissions.name());
+    }
+
+    @Override
+    protected void saveAdditional(@NotNull CompoundTag tag) {
+        super.saveAdditional(tag);
+        save(tag);
     }
 
     @Override
     public @NotNull CompoundTag getUpdateTag() {
         CompoundTag tag = new CompoundTag();
-        tag.putInt("experience_points", _experiencePoints);
-        if (_owner != null) {
-            tag.putUUID("owner", _owner);
-        }
+
+        save(tag);
+
         return tag;
     }
 
@@ -101,6 +134,45 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
 
     public UUID getOwner() {
         return _owner;
+    }
+
+    public TransactionPermissions getWithdrawPermissions() {
+        return _withdrawPermissions;
+    }
+
+    public TransactionPermissions getDepositPermissions() {
+        return _depositPermissions;
+    }
+
+    public TransactionPermissions getLogPermissions() {
+        return _logPermissions;
+    }
+
+    public void setWithdrawPermissions(TransactionPermissions value) {
+        _withdrawPermissions = value;
+
+        setChanged();
+
+        if(level != null && !level.isClientSide)
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+    }
+
+    public void setDepositPermissions(TransactionPermissions value) {
+        _depositPermissions = value;
+
+        setChanged();
+
+        if(level != null && !level.isClientSide)
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+    }
+
+    public void setLogPermissions(TransactionPermissions value) {
+        _logPermissions = value;
+
+        setChanged();
+
+        if(level != null && !level.isClientSide)
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
     }
 
     public static <T> void tick(Level level, BlockPos pos, BlockState state, T blockEntity) {
