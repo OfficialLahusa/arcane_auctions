@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ExperienceObeliskBlock extends Block implements EntityBlock {
 
-    private static VoxelShape SHAPE = Block.box(4, 0, 4, 12, 12, 12);
+    private static VoxelShape SHAPE = Block.box(4, 0, 4, 12, 14, 12);
 
     public ExperienceObeliskBlock(BlockBehaviour.Properties properties)
     {
