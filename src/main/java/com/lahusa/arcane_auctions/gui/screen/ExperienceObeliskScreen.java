@@ -60,8 +60,8 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
     @Override
     protected void renderLabels(@NotNull GuiGraphics gfx, int mouseX, int mouseY) {
         //super.renderLabels(gfx, p_282681_, p_283686_);
-        //p_281635_.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 4210752, false);
-        //p_281635_.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 4210752, false);
+        //p_281635_.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 0x404040, false);
+        //p_281635_.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 0x404040, false);
 
         // Reset buttons
         for(Button button : _buttons) {
@@ -77,7 +77,7 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         }
 
         String titleText = this.title.getString();
-        gfx.drawString(this.font, titleText, this.imageWidth / 2 - this.font.width(titleText) / 2, this.titleLabelY, 4210752, false);
+        gfx.drawString(this.font, titleText, this.imageWidth / 2 - this.font.width(titleText) / 2, this.titleLabelY, 0x404040, false);
 
         String xpText = NumberFormatter.intToString(xpPoints) + " stored";
         gfx.blit(XP_OVERLAY_LOCATION, this.imageWidth / 2 - (this.font.width(xpText) + 8) / 2, 6+20, 0, 0, 0,10, 10, 10, 10);
