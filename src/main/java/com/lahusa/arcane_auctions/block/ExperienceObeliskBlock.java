@@ -31,9 +31,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
-import static net.minecraft.world.level.block.EnchantmentTableBlock.BOOKSHELF_OFFSETS;
-import static net.minecraft.world.level.block.EnchantmentTableBlock.isValidBookShelf;
-
 public class ExperienceObeliskBlock extends Block implements EntityBlock {
 
     private static VoxelShape SHAPE = Block.box(4, 0, 4, 12, 14, 12);
