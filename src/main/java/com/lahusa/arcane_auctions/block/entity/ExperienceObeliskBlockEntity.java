@@ -26,33 +26,51 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.UUID;
+
 public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBlockEntity {
     protected static final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("idle");
     private final AnimatableInstanceCache _cache = GeckoLibUtil.createInstanceCache(this);
     private int _experiencePoints;
+    private UUID _owner;
 
     public ExperienceObeliskBlockEntity(BlockPos pos, BlockState state) {
         super(ArcaneAuctions.EXPERIENCE_OBELISK_BLOCK_ENTITY.get(), pos, state);
 
         _experiencePoints = 1000;
+        _owner = null;
     }
 
     @Override
     protected void saveAdditional(@NotNull CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putInt("experience_points", _experiencePoints);
+
+        if (_owner != null) {
+            tag.putUUID("owner", _owner);
+        }
     }
 
     @Override
     public void load(@NotNull CompoundTag tag) {
         super.load(tag);
         _experiencePoints = tag.getInt("experience_points");
+
+        if (tag.contains("owner")) {
+            _owner = tag.getUUID("owner");
+        }
+        else {
+            _owner = null;
+        }
     }
 
     @Override
-    public CompoundTag getUpdateTag() {
+    public @NotNull CompoundTag getUpdateTag() {
         CompoundTag tag = new CompoundTag();
         tag.putInt("experience_points", _experiencePoints);
+        if (_owner != null) {
+            tag.putUUID("owner", _owner);
+        }
         return tag;
     }
 
@@ -71,6 +89,18 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
 
     public int getExperiencePoints() {
         return _experiencePoints;
+    }
+
+    public void setOwner(UUID owner) {
+        _owner = owner;
+        setChanged();
+
+        if(level != null && !level.isClientSide)
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+    }
+
+    public UUID getOwner() {
+        return _owner;
     }
 
     public static <T> void tick(Level level, BlockPos pos, BlockState state, T blockEntity) {
