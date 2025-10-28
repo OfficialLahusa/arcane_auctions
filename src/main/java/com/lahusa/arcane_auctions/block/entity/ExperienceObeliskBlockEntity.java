@@ -31,7 +31,7 @@ import java.util.UUID;
 public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBlockEntity {
     protected static final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("idle");
     private final AnimatableInstanceCache _cache = GeckoLibUtil.createInstanceCache(this);
-    private int _experiencePoints;
+    private long _experiencePoints;
     private UUID _owner;
 
     public enum TransactionPermissions {
@@ -57,7 +57,7 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
     @Override
     public void load(@NotNull CompoundTag tag) {
         super.load(tag);
-        _experiencePoints = tag.getInt("experience_points");
+        _experiencePoints = tag.getLong("experience_points");
 
         if (tag.contains("owner"))
             _owner = tag.getUUID("owner");
@@ -81,7 +81,7 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
     }
 
     protected void save(CompoundTag tag) {
-        tag.putInt("experience_points", _experiencePoints);
+        tag.putLong("experience_points", _experiencePoints);
 
         if (_owner != null) {
             tag.putUUID("owner", _owner);
@@ -112,7 +112,7 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    public void setExperiencePoints(int experiencePoints) {
+    public void setExperiencePoints(long experiencePoints) {
         _experiencePoints = experiencePoints;
         setChanged();
 
@@ -120,7 +120,7 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
             level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
     }
 
-    public int getExperiencePoints() {
+    public long getExperiencePoints() {
         return _experiencePoints;
     }
 
@@ -181,8 +181,8 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
         }
     }
 
-    public boolean handleTransaction(int transactionAmount, ServerPlayer player) {
-        int playerXP = ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress);
+    public boolean handleTransaction(long transactionAmount, ServerPlayer player) {
+        long playerXP = ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress);
 
         boolean xpAmountValid = transactionAmount != 0 && transactionAmount <= playerXP && transactionAmount >= -_experiencePoints;
 
@@ -190,17 +190,17 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
 
         // Execute transaction
         setExperiencePoints(_experiencePoints + transactionAmount);
-        int newPlayerXP = playerXP - transactionAmount;
+        long newPlayerXP = playerXP - transactionAmount;
 
         float levels = ExperienceConverter.getLevelsAtXPPoints(newPlayerXP);
         int wholeLevels = Mth.floor(levels);
-        int sparePoints = newPlayerXP;
+        long sparePoints = newPlayerXP;
         if (wholeLevels > 0) {
             sparePoints -= ExperienceConverter.getTotalXPRequiredToLevel(wholeLevels);
         }
 
         player.setExperienceLevels(wholeLevels);
-        player.setExperiencePoints(sparePoints);
+        player.setExperiencePoints((int) sparePoints);
 
         assert level != null;
         level.playSound(null, getBlockPos(), SoundEvents.PLAYER_LEVELUP, SoundSource.BLOCKS, 1.0f, 1.0f);

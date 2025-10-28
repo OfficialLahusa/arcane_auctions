@@ -5,6 +5,7 @@ import com.lahusa.arcane_auctions.util.NumberFormatter;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.tree.LiteralCommandNode;
@@ -47,9 +48,9 @@ public class BalanceCommand {
         .then(Commands.argument("targets", GameProfileArgument.gameProfile()).suggests((sourceStack, suggestionsBuilder) -> {
             return SharedSuggestionProvider.suggest(sourceStack.getSource().getServer().getPlayerList().getPlayerNamesArray(), suggestionsBuilder);
         })
-        .then(Commands.argument("amount", IntegerArgumentType.integer(0))
+        .then(Commands.argument("amount", LongArgumentType.longArg(0))
         .executes((sourceStack) -> {
-            return setBalanceMultiple(sourceStack.getSource(), GameProfileArgument.getGameProfiles(sourceStack, "targets"), IntegerArgumentType.getInteger(sourceStack, "amount"));
+            return setBalanceMultiple(sourceStack.getSource(), GameProfileArgument.getGameProfiles(sourceStack, "targets"), LongArgumentType.getLong(sourceStack, "amount"));
         })))));
 
         dispatcher.register(Commands.literal("bal")
@@ -67,12 +68,12 @@ public class BalanceCommand {
         ServerPlayer player = sourceStack.getPlayer();
 
         assert player != null;
-        int playerXP = ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress);
+        long playerXP = ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress);
 
         // Mark success
         sourceStack.sendSuccess(() -> {
             return Component.literal("Current balance: ")
-                    .append(Component.literal(NumberFormatter.intToString(playerXP)).withStyle(ChatFormatting.GREEN))
+                    .append(Component.literal(NumberFormatter.longToString(playerXP)).withStyle(ChatFormatting.GREEN))
                     .append(Component.literal(" points of experience."));
         }, true);
 
@@ -86,14 +87,14 @@ public class BalanceCommand {
             ServerPlayer player = playerList.getPlayer(profile.getId());
 
             assert player != null;
-            int playerXP = ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress);
+            long playerXP = ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress);
 
             // Mark success
             sourceStack.sendSuccess(() -> {
                 return Component.literal("")
                         .append(player.getDisplayName())
                         .append(Component.literal("'s current balance: "))
-                        .append(Component.literal(NumberFormatter.intToString(playerXP)).withStyle(ChatFormatting.GREEN))
+                        .append(Component.literal(NumberFormatter.longToString(playerXP)).withStyle(ChatFormatting.GREEN))
                         .append(Component.literal(" points of experience."));
             }, true);
         }
@@ -101,7 +102,7 @@ public class BalanceCommand {
         return 1;
     }
 
-    private static int setBalanceMultiple(CommandSourceStack sourceStack, Collection<GameProfile> playerProfiles, int newBalance) throws CommandSyntaxException {
+    private static int setBalanceMultiple(CommandSourceStack sourceStack, Collection<GameProfile> playerProfiles, long newBalance) throws CommandSyntaxException {
         PlayerList playerList = sourceStack.getServer().getPlayerList();
 
         for (GameProfile profile : playerProfiles) {
@@ -109,26 +110,26 @@ public class BalanceCommand {
 
             assert player != null;
 
-            int targetPlayerXP = ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress);
+            long targetPlayerXP = ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress);
 
             float levelsTgt = ExperienceConverter.getLevelsAtXPPoints(newBalance);
             int wholeLevelsTgt = Mth.floor(levelsTgt);
-            int sparePointsTgt = newBalance;
+            long sparePointsTgt = newBalance;
             if (wholeLevelsTgt > 0) {
                 sparePointsTgt -= ExperienceConverter.getTotalXPRequiredToLevel(wholeLevelsTgt);
             }
 
             player.setExperienceLevels(wholeLevelsTgt);
-            player.setExperiencePoints(sparePointsTgt);
+            player.setExperiencePoints((int) sparePointsTgt);
 
             // Mark success
             sourceStack.sendSuccess(() -> {
                 return Component.literal("Set ")
                         .append(player.getDisplayName())
                         .append(Component.literal("'s balance to "))
-                        .append(Component.literal(NumberFormatter.intToString(newBalance)).withStyle(ChatFormatting.GREEN))
+                        .append(Component.literal(NumberFormatter.longToString(newBalance)).withStyle(ChatFormatting.GREEN))
                         .append(Component.literal(" points of experience (was "))
-                        .append(Component.literal(NumberFormatter.intToString(targetPlayerXP)).withStyle(ChatFormatting.GREEN))
+                        .append(Component.literal(NumberFormatter.longToString(targetPlayerXP)).withStyle(ChatFormatting.GREEN))
                         .append(Component.literal(")."));
             }, true);
         }

@@ -13,21 +13,21 @@ import java.util.function.Supplier;
 public class ExperienceObeliskTransactionC2SPacket {
 
     public BlockPos pos;
-    public int transactionAmount;
+    public long transactionAmount;
 
-    public ExperienceObeliskTransactionC2SPacket(BlockPos pos, int transactionAmount) {
+    public ExperienceObeliskTransactionC2SPacket(BlockPos pos, long transactionAmount) {
         this.pos = pos;
         this.transactionAmount = transactionAmount;
     }
 
     public ExperienceObeliskTransactionC2SPacket(FriendlyByteBuf buf) {
         pos = buf.readBlockPos();
-        transactionAmount = buf.readInt();
+        transactionAmount = buf.readLong();
     }
 
     public void encode(FriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
-        buf.writeInt(transactionAmount);
+        buf.writeLong(transactionAmount);
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> ctx) {

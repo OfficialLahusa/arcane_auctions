@@ -5,6 +5,7 @@ import com.lahusa.arcane_auctions.util.NumberFormatter;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.ChatFormatting;
@@ -28,13 +29,13 @@ public class PayCommand {
         .then(Commands.argument("targets", GameProfileArgument.gameProfile()).suggests((sourceStack, suggestionsBuilder) -> {
             return SharedSuggestionProvider.suggest(sourceStack.getSource().getServer().getPlayerList().getPlayerNamesArray(), suggestionsBuilder);
         })
-        .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+        .then(Commands.argument("amount", LongArgumentType.longArg(1))
         .executes((sourceStack) -> {
-            return payPlayer(sourceStack.getSource(), GameProfileArgument.getGameProfiles(sourceStack, "targets"), IntegerArgumentType.getInteger(sourceStack, "amount"));
+            return payPlayer(sourceStack.getSource(), GameProfileArgument.getGameProfiles(sourceStack, "targets"), LongArgumentType.getLong(sourceStack, "amount"));
         }))));
     }
 
-    private static int payPlayer(CommandSourceStack sourceStack, Collection<GameProfile> playerProfiles, int transactionAmount) throws CommandSyntaxException {
+    private static int payPlayer(CommandSourceStack sourceStack, Collection<GameProfile> playerProfiles, long transactionAmount) throws CommandSyntaxException {
         if (playerProfiles.size() != 1) {
             throw ERROR_SINGLE_TARGET.create();
         }
@@ -49,42 +50,42 @@ public class PayCommand {
 
         // Check if source player can afford transaction
         assert sourcePlayer != null;
-        int sourcePlayerXP = ExperienceConverter.getTotalCurrentXPPoints(sourcePlayer.experienceLevel, sourcePlayer.experienceProgress);
+        long sourcePlayerXP = ExperienceConverter.getTotalCurrentXPPoints(sourcePlayer.experienceLevel, sourcePlayer.experienceProgress);
         boolean xpAmountValid = transactionAmount > 0 && transactionAmount <= sourcePlayerXP;
 
         if (!xpAmountValid) throw ERROR_TRANSACTION_AMOUNT.create();
 
         // Execute transaction (Source)
-        int newSourcePlayerXP = sourcePlayerXP - transactionAmount;
+        long newSourcePlayerXP = sourcePlayerXP - transactionAmount;
 
         float levelsSrc = ExperienceConverter.getLevelsAtXPPoints(newSourcePlayerXP);
         int wholeLevelsSrc = Mth.floor(levelsSrc);
-        int sparePointsSrc = newSourcePlayerXP;
+        long sparePointsSrc = newSourcePlayerXP;
         if (wholeLevelsSrc > 0) {
             sparePointsSrc -= ExperienceConverter.getTotalXPRequiredToLevel(wholeLevelsSrc);
         }
 
         sourcePlayer.setExperienceLevels(wholeLevelsSrc);
-        sourcePlayer.setExperiencePoints(sparePointsSrc);
+        sourcePlayer.setExperiencePoints((int) sparePointsSrc);
 
         // Execute transaction (Target)
         assert targetPlayer != null;
-        int targetPlayerXP = ExperienceConverter.getTotalCurrentXPPoints(targetPlayer.experienceLevel, targetPlayer.experienceProgress);
-        int newTargetPlayerXP = targetPlayerXP + transactionAmount;
+        long targetPlayerXP = ExperienceConverter.getTotalCurrentXPPoints(targetPlayer.experienceLevel, targetPlayer.experienceProgress);
+        long newTargetPlayerXP = targetPlayerXP + transactionAmount;
 
         float levelsTgt = ExperienceConverter.getLevelsAtXPPoints(newTargetPlayerXP);
         int wholeLevelsTgt = Mth.floor(levelsTgt);
-        int sparePointsTgt = newTargetPlayerXP;
+        long sparePointsTgt = newTargetPlayerXP;
         if (wholeLevelsTgt > 0) {
             sparePointsTgt -= ExperienceConverter.getTotalXPRequiredToLevel(wholeLevelsTgt);
         }
 
         targetPlayer.setExperienceLevels(wholeLevelsTgt);
-        targetPlayer.setExperiencePoints(sparePointsTgt);
+        targetPlayer.setExperiencePoints((int) sparePointsTgt);
 
         targetPlayer.sendSystemMessage(
             Component.literal("Received ")
-                    .append(Component.literal(NumberFormatter.intToString(transactionAmount)).withStyle(ChatFormatting.GREEN))
+                    .append(Component.literal(NumberFormatter.longToString(transactionAmount)).withStyle(ChatFormatting.GREEN))
                     .append(Component.literal(" points of experience from "))
                     .append(targetPlayer.getDisplayName())
                     .append(Component.literal("."))
@@ -93,7 +94,7 @@ public class PayCommand {
         // Mark success
         sourceStack.sendSuccess(() -> {
             return Component.literal("Transferred ")
-                    .append(Component.literal(NumberFormatter.intToString(transactionAmount)).withStyle(ChatFormatting.GREEN))
+                    .append(Component.literal(NumberFormatter.longToString(transactionAmount)).withStyle(ChatFormatting.GREEN))
                     .append(Component.literal(" points of experience to "))
                     .append(targetPlayer.getDisplayName())
                     .append(Component.literal("."));

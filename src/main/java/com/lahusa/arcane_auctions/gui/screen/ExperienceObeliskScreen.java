@@ -106,13 +106,13 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         gfx.drawString(this.font, titleText, this.imageWidth / 2 - this.font.width(titleText) / 2, this.titleLabelY, 0x404040, false);
 
         ExperienceObeliskBlockEntity obeliskEntity = getBlockEntity();
-        int xpPoints = obeliskEntity.getExperiencePoints();
+        long xpPoints = obeliskEntity.getExperiencePoints();
         UUID owner = obeliskEntity.getOwner();
         boolean isOwner = owner != null && owner.equals(_inventory.player.getUUID());
 
         // Transaction tab
         if (_selectedTab == 0) {
-            String xpText = NumberFormatter.intToString(xpPoints) + " stored";
+            String xpText = NumberFormatter.longToString(xpPoints) + " stored";
             gfx.blit(XP_OVERLAY_LOCATION, this.imageWidth / 2 - (this.font.width(xpText) + 8) / 2, 6+20, 0, 0, 0,10, 10, 10, 10);
             gfx.drawString(instance.font, xpText, this.imageWidth / 2 - (this.font.width(xpText) + 8) / 2 + 8, 6+20, 0x80FF20);
 
@@ -211,8 +211,8 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         super.containerTick();
     }
 
-    private void addAmountToBox(int value) {
-        int prevValue = getAmountBoxValue();
+    private void addAmountToBox(long value) {
+        long prevValue = getAmountBoxValue();
 
         int multiplier = 1;
 
@@ -222,13 +222,13 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
         prevValue += multiplier * value;
 
-        _amountBox.setValue(NumberFormatter.intToString(prevValue));
+        _amountBox.setValue(NumberFormatter.longToString(prevValue));
 
         clampBoxAmount();
     }
 
-    private void setBoxAmount(int value) {
-        _amountBox.setValue(NumberFormatter.intToString(value));
+    private void setBoxAmount(long value) {
+        _amountBox.setValue(NumberFormatter.longToString(value));
 
         clampBoxAmount();
     }
@@ -237,28 +237,28 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         ExperienceObeliskBlockEntity obeliskEntity = getBlockEntity();
 
         // Determine min value by checking orbs stored in obelisk
-        int minValue = -obeliskEntity.getExperiencePoints();
+        long minValue = -obeliskEntity.getExperiencePoints();
 
         // Determine max value by checking orbs stored in player
         Player player = _inventory.player;
-        int maxValue = ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress);
+        long maxValue = ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress);
 
         // Clamp value in amount box to range
-        int prevValue = getAmountBoxValue();
+        long prevValue = getAmountBoxValue();
 
         //System.out.println("Min: " + minValue + ", Max: " + maxValue + ", Prev: " + prevValue + " (\"" + _amountBox.getValue() + ")\"");
 
         prevValue = Math.max(Math.min(prevValue, maxValue), minValue);
 
-        _amountBox.setValue(NumberFormatter.intToString(prevValue));
+        _amountBox.setValue(NumberFormatter.longToString(prevValue));
         _amountBox.moveCursorToStart();
     }
 
-    private int getAmountBoxValue() {
-        int prevValue;
+    private long getAmountBoxValue() {
+        long prevValue;
 
         try {
-            prevValue = NumberFormatter.stringToInt(_amountBox.getValue());
+            prevValue = NumberFormatter.stringToLong(_amountBox.getValue());
         }
         catch (NumberFormatException e) {
             prevValue = 0;
@@ -353,7 +353,7 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
         Button addAll = Button.builder(
                         Component.literal(">>").withStyle(ChatFormatting.GREEN),
-                        (onPress) -> {setBoxAmount(Integer.MAX_VALUE);}
+                        (onPress) -> {setBoxAmount(Long.MAX_VALUE);}
                 )
                 .tooltip(Tooltip.create(Component.literal("Deposit all carried experience points.")))
                 .size(20, 20)
@@ -362,7 +362,7 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
         Button removeAll = Button.builder(
                         Component.literal("<<").withStyle(ChatFormatting.RED),
-                        (onPress) -> {setBoxAmount(Integer.MIN_VALUE);}
+                        (onPress) -> {setBoxAmount(Long.MIN_VALUE);}
                 )
                 .tooltip(Tooltip.create(Component.literal("Withdraw all stored experience points.")))
                 .size(20, 20)
@@ -390,7 +390,7 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
             // Otherwise only allow int-parseable strings
             try {
-                int parsedVal = NumberFormatter.stringToInt(val);
+                long parsedVal = NumberFormatter.stringToLong(val);
             }
             catch (NumberFormatException e) {
                 return false;
@@ -400,8 +400,8 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         _amountBox.setResponder((val) -> {
             try {
                 // Re-apply number formatting to ensure correct presentation
-                int parsedVal = NumberFormatter.stringToInt(val);
-                String formattedVal = NumberFormatter.intToString(parsedVal);
+                long parsedVal = NumberFormatter.stringToLong(val);
+                String formattedVal = NumberFormatter.longToString(parsedVal);
 
                 if (!_amountBox.getValue().equals(formattedVal))
                     _amountBox.setValue(formattedVal);

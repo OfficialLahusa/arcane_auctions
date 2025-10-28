@@ -179,7 +179,7 @@ public class ArcaneAuctions {
             LocalPlayer player = instance.player;
 
             if (player != null) {
-                String text = /*"XP: " +*/ NumberFormatter.intToString(ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress));
+                String text = /*"XP: " +*/ NumberFormatter.longToString(ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress));
                 gfx.blit(XP_OVERLAY_LOCATION, 5, 5, 0, 0, 0,10, 10, 10, 10);
                 gfx.drawString(instance.font, text, 5+10-2, 5, 0x80FF20, true);
             }

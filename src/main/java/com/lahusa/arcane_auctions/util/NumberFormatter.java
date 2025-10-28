@@ -14,12 +14,12 @@ public class NumberFormatter {
         formatter.setDecimalFormatSymbols(symbols);
     }
 
-    public static String intToString(int val) {
+    public static String longToString(long val) {
         return formatter.format(val);
     }
 
-    public static int stringToInt(String val) {
+    public static long stringToLong(String val) {
         String cleanVal = val.replaceAll("[,.]", "");
-        return Integer.parseInt(cleanVal);
+        return Long.parseLong(cleanVal);
     }
 }

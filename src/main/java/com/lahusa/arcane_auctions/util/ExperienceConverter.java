@@ -3,19 +3,19 @@ package com.lahusa.arcane_auctions.util;
 import net.minecraft.util.Mth;
 
 public class ExperienceConverter {
-    public static int getTotalXPRequiredToLevel(int currentLevel) {
+    public static long getTotalXPRequiredToLevel(long currentLevel) {
         if (currentLevel <= 16) {
-            return currentLevel*currentLevel + 6*currentLevel;
+            return currentLevel*currentLevel + 6L*currentLevel;
         }
         else if (currentLevel <= 31) {
-            return Mth.floor(2.5 * currentLevel * currentLevel - 40.5 * currentLevel + 360);
+            return (long)(2.5 * currentLevel * currentLevel - 40.5 * currentLevel + 360);
         }
         else {
-            return Mth.floor(4.5 * currentLevel * currentLevel - 162.5 * currentLevel + 2220);
+            return (long)(4.5 * currentLevel * currentLevel - 162.5 * currentLevel + 2220);
         }
     }
 
-    public static int getXPRequiredForNextLevel(int currentLevel) {
+    public static long getXPRequiredForNextLevel(long currentLevel) {
         if (currentLevel <= 15) {
             return 2 * currentLevel + 7;
         }
@@ -27,11 +27,11 @@ public class ExperienceConverter {
         }
     }
 
-    public static int getTotalCurrentXPPoints(int currentLevel, float currentXPProgress) {
+    public static long getTotalCurrentXPPoints(long currentLevel, float currentXPProgress) {
         return getTotalXPRequiredToLevel(currentLevel) + Math.round(getXPRequiredForNextLevel(currentLevel) * currentXPProgress);
     }
 
-    public static float getLevelsAtXPPoints(int points) {
+    public static float getLevelsAtXPPoints(long points) {
         if (points <= 0) {
             return 0;
         }
