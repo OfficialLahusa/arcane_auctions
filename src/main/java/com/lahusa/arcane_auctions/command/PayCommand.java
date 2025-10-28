@@ -26,7 +26,7 @@ public class PayCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("pay")
         .then(Commands.argument("targets", GameProfileArgument.gameProfile()).suggests((sourceStack, suggestionsBuilder) -> {
-            return SharedSuggestionProvider.suggest(sourceStack.getSource().getServer().getPlayerList().getOpNames(), suggestionsBuilder);
+            return SharedSuggestionProvider.suggest(sourceStack.getSource().getServer().getPlayerList().getPlayerNamesArray(), suggestionsBuilder);
         })
         .then(Commands.argument("amount", IntegerArgumentType.integer(1))
         .executes((sourceStack) -> {
