@@ -47,7 +47,7 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
     public ExperienceObeliskBlockEntity(BlockPos pos, BlockState state) {
         super(ArcaneAuctions.EXPERIENCE_OBELISK_BLOCK_ENTITY.get(), pos, state);
 
-        _experiencePoints = 1000;
+        _experiencePoints = 0;
         _owner = null;
         _withdrawPermissions = TransactionPermissions.Everyone;
         _depositPermissions = TransactionPermissions.Everyone;
