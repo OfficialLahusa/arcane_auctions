@@ -34,15 +34,15 @@ public class PayCommand {
         }))));
     }
 
-    private static int payPlayer(CommandSourceStack sourceStack, Collection<GameProfile> players, int transactionAmount) throws CommandSyntaxException {
-        if (players.size() != 1) {
+    private static int payPlayer(CommandSourceStack sourceStack, Collection<GameProfile> playerProfiles, int transactionAmount) throws CommandSyntaxException {
+        if (playerProfiles.size() != 1) {
             throw ERROR_SINGLE_TARGET.create();
         }
 
         // Get target player
-        GameProfile playerProfile = (GameProfile) players.toArray()[0];
-        PlayerList playerlist = sourceStack.getServer().getPlayerList();
-        ServerPlayer targetPlayer = playerlist.getPlayer(playerProfile.getId());
+        GameProfile playerProfile = (GameProfile) playerProfiles.toArray()[0];
+        PlayerList playerList = sourceStack.getServer().getPlayerList();
+        ServerPlayer targetPlayer = playerList.getPlayer(playerProfile.getId());
 
         // Get source player
         ServerPlayer sourcePlayer = sourceStack.getPlayer();

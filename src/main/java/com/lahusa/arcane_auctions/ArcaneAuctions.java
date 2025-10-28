@@ -3,6 +3,7 @@ package com.lahusa.arcane_auctions;
 import com.lahusa.arcane_auctions.block.ExperienceObeliskBlock;
 import com.lahusa.arcane_auctions.block.entity.ExperienceObeliskBlockEntity;
 import com.lahusa.arcane_auctions.block.renderer.ExperienceObeliskBlockEntityRenderer;
+import com.lahusa.arcane_auctions.command.BalanceCommand;
 import com.lahusa.arcane_auctions.command.PayCommand;
 import com.lahusa.arcane_auctions.gui.menu.ExperienceObeliskMenu;
 import com.lahusa.arcane_auctions.gui.screen.ExperienceObeliskScreen;
@@ -143,6 +144,7 @@ public class ArcaneAuctions {
     @SubscribeEvent
     public void registerCommands(RegisterCommandsEvent event) {
         PayCommand.register(event.getDispatcher());
+        BalanceCommand.register(event.getDispatcher());
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
