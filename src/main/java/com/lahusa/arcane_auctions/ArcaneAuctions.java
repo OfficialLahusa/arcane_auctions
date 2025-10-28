@@ -3,6 +3,7 @@ package com.lahusa.arcane_auctions;
 import com.lahusa.arcane_auctions.block.ExperienceObeliskBlock;
 import com.lahusa.arcane_auctions.block.entity.ExperienceObeliskBlockEntity;
 import com.lahusa.arcane_auctions.block.renderer.ExperienceObeliskBlockEntityRenderer;
+import com.lahusa.arcane_auctions.command.PayCommand;
 import com.lahusa.arcane_auctions.gui.menu.ExperienceObeliskMenu;
 import com.lahusa.arcane_auctions.gui.screen.ExperienceObeliskScreen;
 import com.lahusa.arcane_auctions.net.ArcaneAuctionsPacketHandler;
@@ -15,7 +16,6 @@ import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.inventory.MenuType;
@@ -33,6 +33,7 @@ import net.minecraftforge.client.event.CustomizeGuiOverlayEvent;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -139,6 +140,11 @@ public class ArcaneAuctions {
         LOGGER.info("HELLO from server starting");
     }
 
+    @SubscribeEvent
+    public void registerCommands(RegisterCommandsEvent event) {
+        PayCommand.register(event.getDispatcher());
+    }
+
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
@@ -161,7 +167,7 @@ public class ArcaneAuctions {
         }
     }
 
-    @Mod.EventBusSubscriber
+    @Mod.EventBusSubscriber(value = Dist.CLIENT)
     public static class PlayerEvents {
         @SubscribeEvent
         public static void onRenderGameOverlayEvent(CustomizeGuiOverlayEvent.DebugText event) {
