@@ -29,6 +29,7 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -76,8 +77,12 @@ public class ArcaneAuctions {
     // Creates a new Block with the id "arcane_auctions:example_block", combining the namespace and path
     public static final RegistryObject<Block> EXPERIENCE_OBELISK_BLOCK = BLOCKS.register("experience_obelisk", () -> new ExperienceObeliskBlock(
             BlockBehaviour.Properties.of()
-                    .mapColor(MapColor.STONE)
+                    .strength(35, 1200)
+                    .sound(SoundType.AMETHYST)
+                    .emissiveRendering((state, getter, pos) -> true)
+                    .mapColor(MapColor.COLOR_GREEN)
                     .lightLevel(ExperienceObeliskBlock::getLightLevelForState)
+                    .requiresCorrectToolForDrops()
     ));
     // Creates a new BlockItem with the id "arcane_auctions:example_block", combining the namespace and path
     public static final RegistryObject<Item> EXPERIENCE_OBELISK_BLOCK_ITEM = ITEMS.register("experience_obelisk", () -> new BlockItem(EXPERIENCE_OBELISK_BLOCK.get(), new Item.Properties()));
