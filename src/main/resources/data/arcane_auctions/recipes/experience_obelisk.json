@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " b ",
+    "bEb",
+    "OeO"
+  ],
+  "key": {
+    "b": {
+      "item": "minecraft:experience_bottle"
+    },
+    "E": {
+      "item": "minecraft:emerald_block"
+    },
+    "e": {
+      "item": "minecraft:ender_eye"
+    },
+    "O": {
+      "item": "minecraft:obsidian"
+    }
+  },
+  "result": {
+    "item": "arcane_auctions:experience_obelisk",
+    "count": 1
+  }
+}
