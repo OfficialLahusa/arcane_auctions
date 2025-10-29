@@ -89,15 +89,15 @@ public class ArcaneAuctions {
     public static final RegistryObject<BlockEntityType<ExperienceObeliskBlockEntity>> EXPERIENCE_OBELISK_BLOCK_ENTITY = BLOCK_ENTITY_TYPES.register("experience_obelisk", () -> BlockEntityType.Builder.of(ExperienceObeliskBlockEntity::new, EXPERIENCE_OBELISK_BLOCK.get()).build(null));
 
     // Creates a new food item with the id "arcane_auctions:example_id", nutrition 1 and saturation 2
-    public static final RegistryObject<Item> EXAMPLE_ITEM = ITEMS.register("example_item", () -> new Item(new Item.Properties().food(new FoodProperties.Builder().alwaysEat().nutrition(1).saturationMod(2f).build())));
+    //public static final RegistryObject<Item> EXAMPLE_ITEM = ITEMS.register("example_item", () -> new Item(new Item.Properties().food(new FoodProperties.Builder().alwaysEat().nutrition(1).saturationMod(2f).build())));
 
     public static final RegistryObject<MenuType<ExperienceObeliskMenu>> EXPERIENCE_OBELISK_MENU = MENU_TYPES.register("experience_obelisk_menu", () -> new MenuType<>(ExperienceObeliskMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     // Creates a creative tab with the id "arcane_auctions:example_tab" for the example item, that is placed after the combat tab
-    public static final RegistryObject<CreativeModeTab> EXAMPLE_TAB = CREATIVE_MODE_TABS.register("example_tab", () -> CreativeModeTab.builder().withTabsBefore(CreativeModeTabs.COMBAT).icon(() -> EXAMPLE_ITEM.get().getDefaultInstance()).displayItems((parameters, output) -> {
+    /*public static final RegistryObject<CreativeModeTab> EXAMPLE_TAB = CREATIVE_MODE_TABS.register("example_tab", () -> CreativeModeTab.builder().withTabsBefore(CreativeModeTabs.COMBAT).icon(() -> EXAMPLE_ITEM.get().getDefaultInstance()).displayItems((parameters, output) -> {
         output.accept(EXAMPLE_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
         output.accept(EXPERIENCE_OBELISK_BLOCK_ITEM.get());
-    }).build());
+    }).build());*/
 
     public static final Lazy<KeyMapping> GUI_TOGGLE_MAPPING = Lazy.of(() -> new KeyMapping(
             "key.arcane_auctions.toggle_gui",

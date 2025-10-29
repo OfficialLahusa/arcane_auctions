@@ -1,4 +1,5 @@
 {
   "key.arcane_auctions.toggle_gui": "Toggle XP Point GUI",
-  "key.categories.arcane_auctions": "Arcane Auctions"
+  "key.categories.arcane_auctions": "Arcane Auctions",
+  "block.arcane_auctions.experience_obelisk": "Experience Obelisk"
 }
