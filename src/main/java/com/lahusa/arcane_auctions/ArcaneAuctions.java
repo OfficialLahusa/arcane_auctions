@@ -154,6 +154,7 @@ public class ArcaneAuctions {
     public void registerCommands(RegisterCommandsEvent event) {
         PayCommand.register(event.getDispatcher());
         BalanceCommand.register(event.getDispatcher());
+        BuyCommand.register(event.getDispatcher());
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
