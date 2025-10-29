@@ -1,0 +1,6 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "particle": "arcane_auctions:block/experience_obelisk"
+  }
+}
