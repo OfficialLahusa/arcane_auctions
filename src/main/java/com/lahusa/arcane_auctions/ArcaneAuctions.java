@@ -8,6 +8,7 @@ import com.lahusa.arcane_auctions.command.BuyCommand;
 import com.lahusa.arcane_auctions.command.PayCommand;
 import com.lahusa.arcane_auctions.gui.menu.ExperienceObeliskMenu;
 import com.lahusa.arcane_auctions.gui.screen.ExperienceObeliskScreen;
+import com.lahusa.arcane_auctions.item.ExperienceObeliskBlockItem;
 import com.lahusa.arcane_auctions.net.ArcaneAuctionsPacketHandler;
 import com.lahusa.arcane_auctions.util.ExperienceConverter;
 import com.lahusa.arcane_auctions.util.NumberFormatter;
@@ -23,10 +24,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.Item;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
@@ -85,7 +83,11 @@ public class ArcaneAuctions {
                     .requiresCorrectToolForDrops()
     ));
     // Creates a new BlockItem with the id "arcane_auctions:example_block", combining the namespace and path
-    public static final RegistryObject<Item> EXPERIENCE_OBELISK_BLOCK_ITEM = ITEMS.register("experience_obelisk", () -> new BlockItem(EXPERIENCE_OBELISK_BLOCK.get(), new Item.Properties()));
+    public static final RegistryObject<Item> EXPERIENCE_OBELISK_BLOCK_ITEM = ITEMS.register("experience_obelisk", () -> new ExperienceObeliskBlockItem(
+            EXPERIENCE_OBELISK_BLOCK.get(),
+            new Item.Properties()
+                    .rarity(Rarity.UNCOMMON)
+    ));
     public static final RegistryObject<BlockEntityType<ExperienceObeliskBlockEntity>> EXPERIENCE_OBELISK_BLOCK_ENTITY = BLOCK_ENTITY_TYPES.register("experience_obelisk", () -> BlockEntityType.Builder.of(ExperienceObeliskBlockEntity::new, EXPERIENCE_OBELISK_BLOCK.get()).build(null));
 
     // Creates a new food item with the id "arcane_auctions:example_id", nutrition 1 and saturation 2
