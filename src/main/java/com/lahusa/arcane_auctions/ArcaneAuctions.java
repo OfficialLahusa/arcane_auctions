@@ -4,13 +4,16 @@ import com.lahusa.arcane_auctions.block.ExperienceObeliskBlock;
 import com.lahusa.arcane_auctions.block.entity.ExperienceObeliskBlockEntity;
 import com.lahusa.arcane_auctions.block.renderer.ExperienceObeliskBlockEntityRenderer;
 import com.lahusa.arcane_auctions.command.BalanceCommand;
+import com.lahusa.arcane_auctions.command.BuyCommand;
 import com.lahusa.arcane_auctions.command.PayCommand;
 import com.lahusa.arcane_auctions.gui.menu.ExperienceObeliskMenu;
 import com.lahusa.arcane_auctions.gui.screen.ExperienceObeliskScreen;
 import com.lahusa.arcane_auctions.net.ArcaneAuctionsPacketHandler;
 import com.lahusa.arcane_auctions.util.ExperienceConverter;
 import com.lahusa.arcane_auctions.util.NumberFormatter;
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.logging.LogUtils;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.MenuScreens;
@@ -32,9 +35,12 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.CustomizeGuiOverlayEvent;
 import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.Lazy;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -47,6 +53,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -87,7 +94,16 @@ public class ArcaneAuctions {
         output.accept(EXPERIENCE_OBELISK_BLOCK_ITEM.get());
     }).build());
 
+    public static final Lazy<KeyMapping> GUI_TOGGLE_MAPPING = Lazy.of(() -> new KeyMapping(
+            "key.arcane_auctions.toggle_gui",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_F9,
+            "key.categories.arcane_auctions"
+    ));
+
     private static final ResourceLocation XP_OVERLAY_LOCATION = ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/xp_overlay.png");
+
+    public static boolean showXpPointGui = true;
 
     public ArcaneAuctions() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -119,14 +135,7 @@ public class ArcaneAuctions {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         // Some common setup code
-        LOGGER.info("HELLO FROM COMMON SETUP");
-        LOGGER.info("DIRT BLOCK >> {}", ForgeRegistries.BLOCKS.getKey(Blocks.DIRT));
-
-        if (Config.logDirtBlock) LOGGER.info("DIRT BLOCK >> {}", ForgeRegistries.BLOCKS.getKey(Blocks.DIRT));
-
-        LOGGER.info(Config.magicNumberIntroduction + Config.magicNumber);
-
-        Config.items.forEach((item) -> LOGGER.info("ITEM >> {}", item.toString()));
+        LOGGER.info("Setting up Arcane Auctions");
     }
 
     // Add the example block item to the building blocks tab
@@ -138,7 +147,7 @@ public class ArcaneAuctions {
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         // Do something when the server starts
-        LOGGER.info("HELLO from server starting");
+        //LOGGER.info("HELLO from server starting");
     }
 
     @SubscribeEvent
@@ -154,8 +163,8 @@ public class ArcaneAuctions {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
             // Some client setup code
-            LOGGER.info("HELLO FROM CLIENT SETUP");
-            LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+            //LOGGER.info("HELLO FROM CLIENT SETUP");
+            //LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
 
             event.enqueueWork(
                     () -> MenuScreens.register(EXPERIENCE_OBELISK_MENU.get(), ExperienceObeliskScreen::new)
@@ -167,21 +176,41 @@ public class ArcaneAuctions {
             event.registerBlockEntityRenderer(EXPERIENCE_OBELISK_BLOCK_ENTITY.get(), ExperienceObeliskBlockEntityRenderer::new);
             LOGGER.info("REGISTERED RENDERER");
         }
+
+        @SubscribeEvent
+        public static void registerBinds(RegisterKeyMappingsEvent event) {
+            event.register(GUI_TOGGLE_MAPPING.get());
+            LOGGER.info("Registered bindings");
+        }
     }
 
     @Mod.EventBusSubscriber(value = Dist.CLIENT)
-    public static class PlayerEvents {
+    public static class ClientEvents {
+        @SubscribeEvent
+        public static void onClientTick(TickEvent.ClientTickEvent event) {
+            // Only call code once as the tick event is called twice every tick
+            if (event.phase == TickEvent.Phase.END) {
+                while (GUI_TOGGLE_MAPPING.get().consumeClick()) {
+                    // Toggle GUI visibility
+                    ArcaneAuctions.showXpPointGui = !ArcaneAuctions.showXpPointGui;
+                }
+            }
+        }
+
         @SubscribeEvent
         public static void onRenderGameOverlayEvent(CustomizeGuiOverlayEvent.DebugText event) {
             final Minecraft instance = Minecraft.getInstance();
+
+            // Don't render if F3 Debug Screen is open
+            if(instance.options.renderDebug || !Config.showXpPoints || !ArcaneAuctions.showXpPointGui) return;
 
             GuiGraphics gfx = event.getGuiGraphics();
             LocalPlayer player = instance.player;
 
             if (player != null) {
                 String text = /*"XP: " +*/ NumberFormatter.longToString(ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress));
-                gfx.blit(XP_OVERLAY_LOCATION, 5, 5, 0, 0, 0,10, 10, 10, 10);
-                gfx.drawString(instance.font, text, 5+10-2, 5, 0x80FF20, true);
+                gfx.blit(XP_OVERLAY_LOCATION, 5 + Config.xOffset, 5 + Config.yOffset, 0, 0, 0,10, 10, 10, 10);
+                gfx.drawString(instance.font, text, 5+10-2 + Config.xOffset, 5 + Config.yOffset, 0x80FF20, true);
             }
         }
     }
