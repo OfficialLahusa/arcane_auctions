@@ -55,6 +55,8 @@ import net.minecraftforge.registries.RegistryObject;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
+import static com.lahusa.arcane_auctions.ArcaneAuctions.ClientModEvents.GUI_TOGGLE_MAPPING;
+
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(ArcaneAuctions.MODID)
 public class ArcaneAuctions {
@@ -100,13 +102,6 @@ public class ArcaneAuctions {
         output.accept(EXAMPLE_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
         output.accept(EXPERIENCE_OBELISK_BLOCK_ITEM.get());
     }).build());*/
-
-    public static final Lazy<KeyMapping> GUI_TOGGLE_MAPPING = Lazy.of(() -> new KeyMapping(
-            "key.arcane_auctions.toggle_gui",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_F9,
-            "key.categories.arcane_auctions"
-    ));
 
     private static final ResourceLocation XP_OVERLAY_LOCATION = ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/xp_overlay.png");
 
@@ -167,6 +162,13 @@ public class ArcaneAuctions {
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
+
+        public static final Lazy<KeyMapping> GUI_TOGGLE_MAPPING = Lazy.of(() -> new KeyMapping(
+                "key.arcane_auctions.toggle_gui",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_F9,
+                "key.categories.arcane_auctions"
+        ));
 
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
