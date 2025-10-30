@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -42,6 +43,7 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
     private final AnimatableInstanceCache _cache = GeckoLibUtil.createInstanceCache(this);
     private long _experiencePoints;
     private UUID _owner;
+    private List<String> _whitelist;
     private List<TransactionLogEntry> _transactionLog;
     public static final int TRANSACTION_LOG_LENGTH = 8;
 
@@ -60,6 +62,7 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
 
         _experiencePoints = 0;
         _owner = null;
+        _whitelist = new ArrayList<>();
         _transactionLog = new ArrayList<>();
         _withdrawPermissions = TransactionPermissions.Everyone;
         _depositPermissions = TransactionPermissions.Everyone;
@@ -75,6 +78,21 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
             _owner = tag.getUUID("owner");
         else
             _owner = null;
+
+        if (tag.contains("whitelist")) {
+            _whitelist.clear();
+            ListTag whitelistTag = (ListTag) tag.get("whitelist");
+
+            assert whitelistTag != null;
+
+            for (Tag entryTag : whitelistTag) {
+                CompoundTag compoundEntryTag = (CompoundTag) entryTag;
+
+                String username = compoundEntryTag.getString("username");
+
+                _whitelist.add(username);
+            }
+        }
 
         if (tag.contains("transaction_log")) {
             _transactionLog.clear();
@@ -113,6 +131,19 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
 
         if (_owner != null) {
             tag.putUUID("owner", _owner);
+        }
+
+        if (_whitelist != null && !_whitelist.isEmpty()) {
+            ListTag whitelistTag = new ListTag();
+
+            for (String entry : _whitelist) {
+                CompoundTag entryTag = new CompoundTag();
+                entryTag.putString("username", entry);
+
+                whitelistTag.add(entryTag);
+            }
+
+            tag.put("whitelist", whitelistTag);
         }
 
         if (_transactionLog != null && !_transactionLog.isEmpty()) {
@@ -330,6 +361,39 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
                         + ".");
 
         return true;
+    }
+
+    protected boolean hasPermission(Player player, TransactionPermissions permission) {
+        if (_owner.equals(player.getUUID()))
+            // Player is owner
+            return true;
+
+        if(permission == TransactionPermissions.Everyone) {
+            // Everyone is allowed
+            return true;
+        }
+        else if(permission == TransactionPermissions.Whitelist) {
+            for (String whitelistEntry : _whitelist) {
+                if (whitelistEntry.equals(player.getName().getString())) {
+                    // Player is whitelisted
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public boolean mayWithdraw(Player player) {
+        return hasPermission(player, _withdrawPermissions);
+    }
+
+    public boolean mayDeposit(Player player) {
+        return hasPermission(player, _depositPermissions);
+    }
+
+    public boolean mayViewLog(Player player) {
+        return hasPermission(player, _logPermissions);
     }
 
     @Override

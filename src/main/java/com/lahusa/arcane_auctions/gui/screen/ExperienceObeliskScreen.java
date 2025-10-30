@@ -151,17 +151,22 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
             String logTitle = "Transaction Log (" + ExperienceObeliskBlockEntity.TRANSACTION_LOG_LENGTH + " most recent)";
             gfx.drawString(instance.font, logTitle, this.imageWidth / 2 - this.font.width(logTitle) / 2, 20, 0x404040, false);
 
-            // TODO: Hide log when permissions are insufficient
+            // Hide log when permissions are insufficient
+            if (!obeliskEntity.mayViewLog(_inventory.player)) {
+                String permissionError = "You don't have permission to access the log.";
+                gfx.drawString(instance.font, permissionError,  this.imageWidth / 2 - this.font.width(permissionError) / 2, this.imageHeight / 2, 0xFF5555, false);
+            }
+            // Show log
+            else {
+                List<TransactionLogEntry> transactionLog = obeliskEntity.getTransactionLog();
 
+                for (int i = 0; i < transactionLog.size(); i++) {
+                    TransactionLogEntry entry = transactionLog.get(i);
 
-            List<TransactionLogEntry> transactionLog = obeliskEntity.getTransactionLog();
-
-            for (int i = 0; i < transactionLog.size(); i++) {
-                TransactionLogEntry entry = transactionLog.get(i);
-
-                gfx.drawString(instance.font, entry.username,  this.imageWidth / 3 - this.font.width(entry.username) / 2, 30 + 10 * i, 0x404040, false);
-                String amountStr = NumberFormatter.longToString(entry.amount);
-                gfx.drawString(instance.font, amountStr, 2 * this.imageWidth / 3 - this.font.width(amountStr) / 2, 30 + 10 * i, (entry.amount < 0) ? 0xFF5555 : 0x55FF55, false);
+                    gfx.drawString(instance.font, entry.username,  this.imageWidth / 3 - this.font.width(entry.username) / 2, 30 + 10 * i, 0x404040, false);
+                    String amountStr = NumberFormatter.longToString(entry.amount);
+                    gfx.drawString(instance.font, amountStr, 2 * this.imageWidth / 3 - this.font.width(amountStr) / 2, 30 + 10 * i, (entry.amount < 0) ? 0xFF5555 : 0x55FF55, false);
+                }
             }
         }
 
