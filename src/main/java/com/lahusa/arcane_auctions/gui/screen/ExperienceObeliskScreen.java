@@ -4,6 +4,7 @@ import com.lahusa.arcane_auctions.ArcaneAuctions;
 import com.lahusa.arcane_auctions.block.entity.ExperienceObeliskBlockEntity;
 import com.lahusa.arcane_auctions.gui.menu.ExperienceObeliskMenu;
 import com.lahusa.arcane_auctions.net.ArcaneAuctionsPacketHandler;
+import com.lahusa.arcane_auctions.net.ExperienceObeliskPermissionUpdateC2SPacket;
 import com.lahusa.arcane_auctions.net.ExperienceObeliskTransactionC2SPacket;
 import com.lahusa.arcane_auctions.util.ExperienceConverter;
 import com.lahusa.arcane_auctions.util.NumberFormatter;
@@ -33,6 +34,10 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
     private final Inventory _inventory;
     private final Level _clientLevel;
     private EditBox _amountBox;
+
+    private CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> _withdrawalPermissionButton;
+    private CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> _depositPermissionButton;
+    private CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> _logPermissionButton;
 
     /*
     0: Transaction
@@ -270,6 +275,10 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
     private void initWidgets() {
         clearWidgets();
 
+        _depositPermissionButton = null;
+        _withdrawalPermissionButton = null;
+        _logPermissionButton = null;
+
         switch (_selectedTab) {
             case 0:
                 initTransactionWidgets();
@@ -428,40 +437,49 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
     private void initConfigurationWidgets() {
         ExperienceObeliskBlockEntity obeliskEntity = getBlockEntity();
 
-
-
-        CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> depositPermissionButton = CycleButton.builder(ExperienceObeliskScreen::getCycleButtonLabel)
+        _depositPermissionButton = CycleButton.builder(ExperienceObeliskScreen::getCycleButtonLabel)
                 .withValues(ExperienceObeliskBlockEntity.TransactionPermissions.values())
                 .withInitialValue(obeliskEntity.getDepositPermissions())
                 .create(this.width / 2 - 60, this.height / 2 - 20, 120, 20,
                         Component.literal("Deposit"),
-                        ExperienceObeliskScreen::onCycleButtonChange);
+                        this::onPermissionCycleButtonChange);
 
-        CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> withdrawalPermissionButton = CycleButton.builder(ExperienceObeliskScreen::getCycleButtonLabel)
+        _withdrawalPermissionButton = CycleButton.builder(ExperienceObeliskScreen::getCycleButtonLabel)
                 .withValues(ExperienceObeliskBlockEntity.TransactionPermissions.values())
                 .withInitialValue(obeliskEntity.getWithdrawPermissions())
                 .create(this.width / 2 - 60, this.height / 2, 120, 20,
                         Component.literal("Withdraw"),
-                        ExperienceObeliskScreen::onCycleButtonChange);
+                        this::onPermissionCycleButtonChange);
 
-        CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> logPermissionButton = CycleButton.builder(ExperienceObeliskScreen::getCycleButtonLabel)
+        _logPermissionButton = CycleButton.builder(ExperienceObeliskScreen::getCycleButtonLabel)
                 .withValues(ExperienceObeliskBlockEntity.TransactionPermissions.values())
                 .withInitialValue(obeliskEntity.getDepositPermissions()) // TODO
                 .create(this.width / 2 - 60, this.height / 2 + 20, 120, 20,
                         Component.literal("Log View"),
-                        ExperienceObeliskScreen::onCycleButtonChange);
+                        this::onPermissionCycleButtonChange);
 
-        addRenderableWidget(depositPermissionButton);
-        addRenderableWidget(withdrawalPermissionButton);
-        addRenderableWidget(logPermissionButton);
+        addRenderableWidget(_depositPermissionButton);
+        addRenderableWidget(_withdrawalPermissionButton);
+        addRenderableWidget(_logPermissionButton);
     }
 
     private static Component getCycleButtonLabel(ExperienceObeliskBlockEntity.TransactionPermissions value) {
         return Component.literal(value.name());
     }
 
-    private static void onCycleButtonChange(CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> cycleButton, ExperienceObeliskBlockEntity.TransactionPermissions value) {
-        System.out.println(value);
+    private void onPermissionCycleButtonChange(CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> cycleButton, ExperienceObeliskBlockEntity.TransactionPermissions value) {
+        if (_depositPermissionButton == null || _withdrawalPermissionButton == null || _logPermissionButton == null) {
+            return;
+        }
+
+        // Send permission update packet to server
+        ArcaneAuctionsPacketHandler.INSTANCE.sendToServer(
+                new ExperienceObeliskPermissionUpdateC2SPacket(
+                        menu.getBlockPos(),
+                        _withdrawalPermissionButton.getValue(),
+                        _depositPermissionButton.getValue(),
+                        _logPermissionButton.getValue())
+        );
     }
 
     private void initLogWidgets() {

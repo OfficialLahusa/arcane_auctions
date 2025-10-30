@@ -22,5 +22,11 @@ public class ArcaneAuctionsPacketHandler {
                 ExperienceObeliskTransactionC2SPacket::encode,
                 ExperienceObeliskTransactionC2SPacket::new,
                 ExperienceObeliskTransactionC2SPacket::handle);
+
+        INSTANCE.registerMessage(id++,
+                ExperienceObeliskPermissionUpdateC2SPacket.class,
+                ExperienceObeliskPermissionUpdateC2SPacket::encode,
+                ExperienceObeliskPermissionUpdateC2SPacket::new,
+                ExperienceObeliskPermissionUpdateC2SPacket::handle);
     }
 }

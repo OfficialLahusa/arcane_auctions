@@ -2,8 +2,10 @@ package com.lahusa.arcane_auctions.block.entity;
 
 import com.lahusa.arcane_auctions.ArcaneAuctions;
 import com.lahusa.arcane_auctions.util.ExperienceConverter;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -182,6 +184,8 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
     }
 
     public boolean handleTransaction(long transactionAmount, ServerPlayer player) {
+        // TODO: Check for permissions
+
         long playerXP = ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress);
 
         boolean xpAmountValid = transactionAmount != 0 && transactionAmount <= playerXP && transactionAmount >= -_experiencePoints;
@@ -205,6 +209,24 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
         assert level != null;
         level.playSound(null, getBlockPos(), SoundEvents.PLAYER_LEVELUP, SoundSource.BLOCKS, 1.0f, 1.0f);
 
+        level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+
+        return true;
+    }
+
+    public boolean handlePermissionUpdate(TransactionPermissions withdrawPermissions, TransactionPermissions depositPermissions, TransactionPermissions logPermissions, ServerPlayer player) {
+        // Check for owner permissions
+        if (!_owner.equals(player.getUUID())) {
+            player.sendSystemMessage(Component.literal("Only the owner may change the permissions.").withStyle(ChatFormatting.RED));
+            return false;
+        }
+
+        // Change permissions
+        _withdrawPermissions = withdrawPermissions;
+        _depositPermissions = depositPermissions;
+        _logPermissions = logPermissions;
+
+        assert level != null;
         level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
 
         return true;
