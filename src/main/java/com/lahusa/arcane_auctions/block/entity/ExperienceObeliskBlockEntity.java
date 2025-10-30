@@ -2,6 +2,7 @@ package com.lahusa.arcane_auctions.block.entity;
 
 import com.lahusa.arcane_auctions.ArcaneAuctions;
 import com.lahusa.arcane_auctions.util.ExperienceConverter;
+import com.lahusa.arcane_auctions.util.NumberFormatter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -192,6 +193,8 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
 
         if (!xpAmountValid) return false;
 
+        long prevXpPoints = _experiencePoints;
+
         // Execute transaction
         setExperiencePoints(_experiencePoints + transactionAmount);
         long newPlayerXP = playerXP - transactionAmount;
@@ -211,6 +214,24 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
 
         level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
 
+        ArcaneAuctions.LOGGER.info(
+                player.getName().getString()
+                        + ((transactionAmount < 0) ? " withdrew " : " deposited ")
+                        + NumberFormatter.longToString(Math.abs(transactionAmount))
+                        + " points of experience"
+                        + ((transactionAmount < 0) ? " from" : " into")
+                        + " experience obelisk at "
+                        + getBlockPos().toShortString()
+                        + " (Obelisk: "
+                        + NumberFormatter.longToString(prevXpPoints)
+                        + " -> "
+                        + NumberFormatter.longToString(_experiencePoints)
+                        + ", Player: "
+                        + NumberFormatter.longToString(playerXP)
+                        + " -> "
+                        + NumberFormatter.longToString(newPlayerXP)
+                        + ").");
+
         return true;
     }
 
@@ -228,6 +249,15 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
 
         assert level != null;
         level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+
+        ArcaneAuctions.LOGGER.info(
+                player.getName().getString()
+                        + " updated permissions of experience obelisk at "
+                        + getBlockPos().toShortString()
+                        + "to Deposit: " + depositPermissions.name()
+                        + ", Withdraw: " + withdrawPermissions.name()
+                        + ", Log: " + logPermissions.name()
+                        + ".");
 
         return true;
     }
