@@ -133,7 +133,7 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
             tag.putUUID("owner", _owner);
         }
 
-        if (_whitelist != null && !_whitelist.isEmpty()) {
+        if (_whitelist != null) {
             ListTag whitelistTag = new ListTag();
 
             for (String entry : _whitelist) {
@@ -146,7 +146,7 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
             tag.put("whitelist", whitelistTag);
         }
 
-        if (_transactionLog != null && !_transactionLog.isEmpty()) {
+        if (_transactionLog != null) {
             ListTag transactionLogTag = new ListTag();
 
             for (TransactionLogEntry entry : _transactionLog) {
@@ -252,22 +252,11 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
         return Collections.unmodifiableList(_transactionLog);
     }
 
-    /*
-    public TransactionLogEntry getTransactionLogEntry(int idx) {
-        if (_transactionLog == null || _transactionLog.isEmpty())
-            throw new UnsupportedOperationException("Cannot get entry of empty log");
-        if (idx < 0 || idx >= _transactionLog.size())
-            throw new IndexOutOfBoundsException("Log entry index " + idx + " out of bounds for length " + _transactionLog.size() + ".");
-
-        return _transactionLog.get(idx);
+    public List<String> getWhitelist() {
+        return Collections.unmodifiableList(_whitelist);
     }
 
-    public int getTransactionLogLength() {
-        return _transactionLog.size();
-    }
-    */
-
-    public void addTransactionLogEntry(TransactionLogEntry entry) {
+    private void addTransactionLogEntry(TransactionLogEntry entry) {
         _transactionLog.add(entry);
 
         // Limit log length
@@ -358,6 +347,73 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
                         + "to Deposit: " + depositPermissions.name()
                         + ", Withdraw: " + withdrawPermissions.name()
                         + ", Log: " + logPermissions.name()
+                        + ".");
+
+        return true;
+    }
+
+    public boolean handleWhitelistAdd(String username, ServerPlayer player) {
+        // Check for owner permissions
+        if (!_owner.equals(player.getUUID())) {
+            player.sendSystemMessage(Component.literal("Only the owner may modify the whitelist.").withStyle(ChatFormatting.RED));
+            return false;
+        }
+
+        if (!_whitelist.contains(username))
+            _whitelist.add(username);
+
+        assert level != null;
+        level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+
+        ArcaneAuctions.LOGGER.info(
+                player.getName().getString()
+                        + " added username " + username
+                        + " to whitelist of experience obelisk at "
+                        + getBlockPos().toShortString()
+                        + ".");
+
+        return true;
+    }
+
+    public boolean handleWhitelistRemove(String username, ServerPlayer player) {
+        // Check for owner permissions
+        if (!_owner.equals(player.getUUID())) {
+            player.sendSystemMessage(Component.literal("Only the owner may modify the whitelist.").withStyle(ChatFormatting.RED));
+            return false;
+        }
+
+        if (_whitelist.contains(username))
+            _whitelist.removeAll(Collections.singletonList(username));
+
+        assert level != null;
+        level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+
+        ArcaneAuctions.LOGGER.info(
+                player.getName().getString()
+                        + " removed username " + username
+                        + " from whitelist of experience obelisk at "
+                        + getBlockPos().toShortString()
+                        + ".");
+
+        return true;
+    }
+
+    public boolean handleWhitelistClear(ServerPlayer player) {
+        // Check for owner permissions
+        if (!_owner.equals(player.getUUID())) {
+            player.sendSystemMessage(Component.literal("Only the owner may modify the whitelist.").withStyle(ChatFormatting.RED));
+            return false;
+        }
+
+        _whitelist.clear();
+
+        assert level != null;
+        level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+
+        ArcaneAuctions.LOGGER.info(
+                player.getName().getString()
+                        + " cleared whitelist of experience obelisk at "
+                        + getBlockPos().toShortString()
                         + ".");
 
         return true;

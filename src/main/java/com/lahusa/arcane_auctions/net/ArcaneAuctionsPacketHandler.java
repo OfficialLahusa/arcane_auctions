@@ -28,5 +28,23 @@ public class ArcaneAuctionsPacketHandler {
                 ExperienceObeliskPermissionUpdateC2SPacket::encode,
                 ExperienceObeliskPermissionUpdateC2SPacket::new,
                 ExperienceObeliskPermissionUpdateC2SPacket::handle);
+
+        INSTANCE.registerMessage(id++,
+                ExperienceObeliskWhitelistAddC2SPacket.class,
+                ExperienceObeliskWhitelistAddC2SPacket::encode,
+                ExperienceObeliskWhitelistAddC2SPacket::new,
+                ExperienceObeliskWhitelistAddC2SPacket::handle);
+
+        INSTANCE.registerMessage(id++,
+                ExperienceObeliskWhitelistRemoveC2SPacket.class,
+                ExperienceObeliskWhitelistRemoveC2SPacket::encode,
+                ExperienceObeliskWhitelistRemoveC2SPacket::new,
+                ExperienceObeliskWhitelistRemoveC2SPacket::handle);
+
+        INSTANCE.registerMessage(id++,
+                ExperienceObeliskWhitelistClearC2SPacket.class,
+                ExperienceObeliskWhitelistClearC2SPacket::encode,
+                ExperienceObeliskWhitelistClearC2SPacket::new,
+                ExperienceObeliskWhitelistClearC2SPacket::handle);
     }
 }

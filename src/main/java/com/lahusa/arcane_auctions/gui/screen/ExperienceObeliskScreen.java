@@ -4,12 +4,11 @@ import com.lahusa.arcane_auctions.ArcaneAuctions;
 import com.lahusa.arcane_auctions.block.entity.ExperienceObeliskBlockEntity;
 import com.lahusa.arcane_auctions.data.TransactionLogEntry;
 import com.lahusa.arcane_auctions.gui.menu.ExperienceObeliskMenu;
-import com.lahusa.arcane_auctions.net.ArcaneAuctionsPacketHandler;
-import com.lahusa.arcane_auctions.net.ExperienceObeliskPermissionUpdateC2SPacket;
-import com.lahusa.arcane_auctions.net.ExperienceObeliskTransactionC2SPacket;
+import com.lahusa.arcane_auctions.net.*;
 import com.lahusa.arcane_auctions.util.ExperienceConverter;
 import com.lahusa.arcane_auctions.util.NumberFormatter;
 import com.lahusa.arcane_auctions.util.UserNameConverter;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -20,6 +19,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -36,6 +36,7 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
     private final Inventory _inventory;
     private final Level _clientLevel;
     private EditBox _amountBox;
+    private EditBox _usernameBox;
 
     private CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> _withdrawalPermissionButton;
     private CycleButton<ExperienceObeliskBlockEntity.TransactionPermissions> _depositPermissionButton;
@@ -92,6 +93,10 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
             // Draw stored amount text field backdrop
             gfx.blit(BACKGROUND_LOCATION, this.leftPos+47, this.topPos+21, 64, 116, 106, 18);
         }
+        else if (_selectedTab == 1) {
+            // Draw whitelist background
+            gfx.blit(BACKGROUND_LOCATION, this.leftPos+this.imageWidth, this.topPos - (132 - this.imageHeight) / 2 + 4, 170, 124, 86, 132);
+        }
 
         // Draw selected tab
         gfx.blit(BACKGROUND_LOCATION, this.leftPos-32+4, this.topPos+_tabOffsetY+_selectedTab*26, 32, 116, 32, 26);
@@ -144,6 +149,30 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
             }
 
             gfx.drawString(instance.font, ownerText, this.imageWidth / 2 - this.font.width(ownerText) / 2, 6+20, 0x404040, false);
+
+            // Render whitelist names
+            List<String> whitelist = obeliskEntity.getWhitelist();
+            int overflowLines = 0;
+            for (int i = 0; i < whitelist.size(); i++) {
+                String username = whitelist.get(i);
+
+                // Single-line
+                if(username.length()<9) {
+                    gfx.drawString(instance.font, username, this.imageWidth+15, -(132 - this.imageHeight) / 2 + 4 + 15 + 10*(i+overflowLines), 0x404040, false);
+                }
+                // Multiline
+                else {
+                    String firstLine = username.substring(0, 9) + "-";
+                    String secondLine = username.substring(9);
+
+                    gfx.drawString(instance.font, firstLine, this.imageWidth+15, -(132 - this.imageHeight) / 2 + 4 + 15 + 10*(i+overflowLines), 0x404040, false);
+                    overflowLines++;
+                    gfx.drawString(instance.font, secondLine, this.imageWidth+15, -(132 - this.imageHeight) / 2 + 4 + 15 + 10*(i+overflowLines), 0x404040, false);
+                }
+
+                if (i + overflowLines >= 8)
+                    break;
+            }
         }
         // Log tab
         else if(_selectedTab == 2) {
@@ -247,7 +276,6 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
         int multiplier = 1;
 
-        // TODO: Shift for 1k multiplier
         if (hasShiftDown()) multiplier = 1000;
         if (hasControlDown()) multiplier = 1000000;
 
@@ -298,8 +326,37 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         return prevValue;
     }
 
+    private void addNameToWhitelist() {
+        String name = _usernameBox.getValue();
+
+        if (name.isBlank())
+            return;
+
+        ArcaneAuctionsPacketHandler.INSTANCE.sendToServer(new ExperienceObeliskWhitelistAddC2SPacket(menu.getBlockPos(), name));
+
+        _usernameBox.setValue("");
+    }
+
+    private void removeNameFromWhitelist() {
+        String name = _usernameBox.getValue();
+
+        if (name.isBlank())
+            return;
+
+        ArcaneAuctionsPacketHandler.INSTANCE.sendToServer(new ExperienceObeliskWhitelistRemoveC2SPacket(menu.getBlockPos(), name));
+
+        _usernameBox.setValue("");
+    }
+
+    private void clearWhitelist() {
+        ArcaneAuctionsPacketHandler.INSTANCE.sendToServer(new ExperienceObeliskWhitelistClearC2SPacket(menu.getBlockPos()));
+    }
+
     private void initWidgets() {
         clearWidgets();
+
+        _amountBox = null;
+        _usernameBox = null;
 
         _depositPermissionButton = null;
         _withdrawalPermissionButton = null;
@@ -484,6 +541,55 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
                         Component.literal("Log View"),
                         this::onPermissionCycleButtonChange);
 
+        // this.leftPos+this.imageWidth, this.topPos - (132 - this.imageHeight) / 2 + 4
+        _usernameBox = new EditBox(font, this.leftPos+this.imageWidth+15, this.topPos - (132 - this.imageHeight) / 2 + 4 + 108, 56, 14, Component.literal(""));
+        _usernameBox.setHint(Component.literal("Username"));
+        _usernameBox.setTooltip(Tooltip.create(Component.literal("Username to add/remove to/from the whitelist")));
+        _usernameBox.setFilter((val) ->
+            val.length() <= 16
+        );
+        _usernameBox.setResponder((val) -> {
+            String trimmed = val.trim();
+
+            if (!_usernameBox.getValue().equals(trimmed)) {
+                _usernameBox.setValue(trimmed);
+            }
+        });
+
+        int buttonInset = (56-32)/2;
+
+        Button addButton = Button.builder(
+                        Component.literal("+"),
+                        (onPress) -> {addNameToWhitelist();}
+                )
+                .tooltip(Tooltip.create(Component.literal("Add user to whitelist.")))
+                .size(16, 16)
+                .pos(this.leftPos+this.imageWidth+15+56+1-buttonInset-1, this.topPos - (132 - this.imageHeight) / 2 + 4 + 107+16)
+                .build();
+
+        Button removeButton = Button.builder(
+                        Component.literal("-"),
+                        (onPress) -> {removeNameFromWhitelist();}
+                )
+                .tooltip(Tooltip.create(Component.literal("Remove user from whitelist.")))
+                .size(16, 16)
+                .pos(this.leftPos+this.imageWidth+15-16-1+buttonInset+1, this.topPos - (132 - this.imageHeight) / 2 + 4 + 107+16)
+                .build();
+
+        Button clearButton = Button.builder(
+                        Component.literal("Clear"),
+                        (onPress) -> {clearWhitelist();}
+                )
+                .tooltip(Tooltip.create(Component.literal("Clear whitelist.")))
+                .size(32, 16)
+                .pos(this.leftPos+this.imageWidth+15+buttonInset, this.topPos - (132 - this.imageHeight) / 2 + 4 + 107+16)
+                .build();
+
+        addRenderableWidget(_usernameBox);
+        addRenderableWidget(addButton);
+        addRenderableWidget(removeButton);
+        addRenderableWidget(clearButton);
+
         addRenderableWidget(_depositPermissionButton);
         addRenderableWidget(_withdrawalPermissionButton);
         addRenderableWidget(_logPermissionButton);
@@ -510,5 +616,33 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
     private void initLogWidgets() {
 
+    }
+
+    @Override
+    public boolean keyPressed(int p_97765_, int p_97766_, int p_97767_) {
+        InputConstants.Key mouseKey = InputConstants.getKey(p_97765_, p_97766_);
+        assert this.minecraft != null;
+        if (this.minecraft.options.keyInventory.isActiveAndMatches(mouseKey)) {
+            // Don't close when E is pressed
+            //this.onClose();
+            return true;
+        } else if (super.keyPressed(p_97765_, p_97766_, p_97767_)) {
+            return true;
+        } else {
+            boolean handled = this.checkHotbarKeyPressed(p_97765_, p_97766_);// Forge MC-146650: Needs to return true when the key is handled
+            if (this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
+                if (this.minecraft.options.keyPickItem.isActiveAndMatches(mouseKey)) {
+                    this.slotClicked(this.hoveredSlot, this.hoveredSlot.index, 0, ClickType.CLONE);
+                    handled = true;
+                } else if (this.minecraft.options.keyDrop.isActiveAndMatches(mouseKey)) {
+                    this.slotClicked(this.hoveredSlot, this.hoveredSlot.index, hasControlDown() ? 1 : 0, ClickType.THROW);
+                    handled = true;
+                }
+            } else if (this.minecraft.options.keyDrop.isActiveAndMatches(mouseKey)) {
+                handled = true; // Forge MC-146650: Emulate MC bug, so we don't drop from hotbar when pressing drop without hovering over a item.
+            }
+
+            return handled;
+        }
     }
 }
