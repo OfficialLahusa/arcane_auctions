@@ -130,6 +130,24 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
 
             gfx.drawString(instance.font, "Deposit", this.imageWidth / 2 + 60 - (this.font.width("Deposit")) / 2, 30 + this.imageHeight / 2, 0x404040, false);
             gfx.drawString(instance.font, "Withdraw", this.imageWidth / 2 - 60 - (this.font.width("Withdraw")) / 2, 30 + this.imageHeight / 2, 0x404040, false);
+
+            // Permission hint
+            String permissionWarning = null;
+            if (!obeliskEntity.mayDeposit(_inventory.player)) {
+                permissionWarning = "You may not deposit into this obelisk.";
+            }
+            if (!obeliskEntity.mayViewLog(_inventory.player)) {
+                if (permissionWarning != null) {
+                    permissionWarning = "You may neither deposit nor withdraw from this obelisk.";
+                }
+                else {
+                    permissionWarning = "You may not withdraw from this obelisk.";
+                }
+            }
+
+            if (permissionWarning != null) {
+                gfx.drawString(instance.font, permissionWarning,  this.imageWidth / 2 - this.font.width(permissionWarning) / 2, this.imageHeight + 10, 0xFFAA00, false);
+            }
         }
         // Configuration tab
         else if(_selectedTab == 1) {
@@ -302,6 +320,14 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         Player player = _inventory.player;
         long maxValue = ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress);
 
+        // Enforce permission transaction amount limits
+        if (!obeliskEntity.mayDeposit(_inventory.player)) {
+            maxValue = 0;
+        }
+        if (!obeliskEntity.mayWithdraw(_inventory.player)) {
+            minValue = 0;
+        }
+
         // Clamp value in amount box to range
         long prevValue = getAmountBoxValue();
 
@@ -464,6 +490,7 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         Button confirmTransfer = Button.builder(
                         Component.literal("Transfer"),
                         (onPress) -> {
+                            clampBoxAmount();
                             ArcaneAuctionsPacketHandler.INSTANCE.sendToServer(new ExperienceObeliskTransactionC2SPacket(menu.getBlockPos(), getAmountBoxValue()));
                             setBoxAmount(0);
                         }
@@ -515,6 +542,22 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         addRenderableWidget(confirmTransfer);
 
         addRenderableWidget(_amountBox);
+
+        // Disable widgets if player can neither deposit nor withdraw
+        ExperienceObeliskBlockEntity obeliskEntity = getBlockEntity();
+        if (!obeliskEntity.mayWithdraw(_inventory.player) && obeliskEntity.mayDeposit(_inventory.player)) {
+            reset.active = false;
+            addOne.active = false;
+            removeOne.active = false;
+            addTen.active = false;
+            removeTen.active = false;
+            addHundred.active = false;
+            removeHundred.active = false;
+            addAll.active = false;
+            removeAll.active = false;
+            confirmTransfer.active = false;
+            _amountBox.active = false;
+        }
     }
 
     private void initConfigurationWidgets() {
@@ -593,6 +636,17 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
         addRenderableWidget(_depositPermissionButton);
         addRenderableWidget(_withdrawalPermissionButton);
         addRenderableWidget(_logPermissionButton);
+
+        // Disable widgets when player is not owner
+        if (!obeliskEntity.getOwner().equals(_inventory.player.getUUID())) {
+            _usernameBox.active = false;
+            addButton.active = false;
+            removeButton.active = false;
+            clearButton.active = false;
+            _depositPermissionButton.active = false;
+            _withdrawalPermissionButton.active = false;
+            _logPermissionButton.active = false;
+        }
     }
 
     private static Component getCycleButtonLabel(ExperienceObeliskBlockEntity.TransactionPermissions value) {

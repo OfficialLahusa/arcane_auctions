@@ -272,7 +272,12 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
     }
 
     public boolean handleTransaction(long transactionAmount, ServerPlayer player) {
-        // TODO: Check for permissions
+        // Enforce permissions
+        boolean hasPermission = (transactionAmount < 0) ? mayWithdraw(player) : mayDeposit(player);
+        if (!hasPermission) {
+            player.sendSystemMessage(Component.literal("You do not have sufficient permission to perform this transaction.").withStyle(ChatFormatting.RED));
+            return false;
+        }
 
         long playerXP = ExperienceConverter.getTotalCurrentXPPoints(player.experienceLevel, player.experienceProgress);
 
