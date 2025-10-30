@@ -2,6 +2,7 @@ package com.lahusa.arcane_auctions.gui.screen;
 
 import com.lahusa.arcane_auctions.ArcaneAuctions;
 import com.lahusa.arcane_auctions.block.entity.ExperienceObeliskBlockEntity;
+import com.lahusa.arcane_auctions.data.TransactionLogEntry;
 import com.lahusa.arcane_auctions.gui.menu.ExperienceObeliskMenu;
 import com.lahusa.arcane_auctions.net.ArcaneAuctionsPacketHandler;
 import com.lahusa.arcane_auctions.net.ExperienceObeliskPermissionUpdateC2SPacket;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.UUID;
 
 public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceObeliskMenu> {
@@ -142,6 +144,25 @@ public class ExperienceObeliskScreen extends AbstractContainerScreen<ExperienceO
             }
 
             gfx.drawString(instance.font, ownerText, this.imageWidth / 2 - this.font.width(ownerText) / 2, 6+20, 0x404040, false);
+        }
+        // Log tab
+        else if(_selectedTab == 2) {
+
+            String logTitle = "Transaction Log (" + ExperienceObeliskBlockEntity.TRANSACTION_LOG_LENGTH + " most recent)";
+            gfx.drawString(instance.font, logTitle, this.imageWidth / 2 - this.font.width(logTitle) / 2, 20, 0x404040, false);
+
+            // TODO: Hide log when permissions are insufficient
+
+
+            List<TransactionLogEntry> transactionLog = obeliskEntity.getTransactionLog();
+
+            for (int i = 0; i < transactionLog.size(); i++) {
+                TransactionLogEntry entry = transactionLog.get(i);
+
+                gfx.drawString(instance.font, entry.username,  this.imageWidth / 3 - this.font.width(entry.username) / 2, 30 + 10 * i, 0x404040, false);
+                String amountStr = NumberFormatter.longToString(entry.amount);
+                gfx.drawString(instance.font, amountStr, 2 * this.imageWidth / 3 - this.font.width(amountStr) / 2, 30 + 10 * i, (entry.amount < 0) ? 0xFF5555 : 0x55FF55, false);
+            }
         }
 
         // Render tab tooltips

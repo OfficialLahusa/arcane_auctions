@@ -1,11 +1,14 @@
 package com.lahusa.arcane_auctions.block.entity;
 
 import com.lahusa.arcane_auctions.ArcaneAuctions;
+import com.lahusa.arcane_auctions.data.TransactionLogEntry;
 import com.lahusa.arcane_auctions.util.ExperienceConverter;
 import com.lahusa.arcane_auctions.util.NumberFormatter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -29,6 +32,9 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBlockEntity {
@@ -36,6 +42,8 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
     private final AnimatableInstanceCache _cache = GeckoLibUtil.createInstanceCache(this);
     private long _experiencePoints;
     private UUID _owner;
+    private List<TransactionLogEntry> _transactionLog;
+    public static final int TRANSACTION_LOG_LENGTH = 8;
 
     public enum TransactionPermissions {
         Everyone,
@@ -52,6 +60,7 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
 
         _experiencePoints = 0;
         _owner = null;
+        _transactionLog = new ArrayList<>();
         _withdrawPermissions = TransactionPermissions.Everyone;
         _depositPermissions = TransactionPermissions.Everyone;
         _logPermissions = TransactionPermissions.Everyone;
@@ -66,6 +75,22 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
             _owner = tag.getUUID("owner");
         else
             _owner = null;
+
+        if (tag.contains("transaction_log")) {
+            _transactionLog.clear();
+            ListTag transactionLogTag = (ListTag) tag.get("transaction_log");
+
+            assert transactionLogTag != null;
+
+            for (Tag entryTag : transactionLogTag) {
+                CompoundTag compoundEntryTag = (CompoundTag) entryTag;
+
+                String username = compoundEntryTag.getString("username");
+                long amount = compoundEntryTag.getLong("amount");
+
+                _transactionLog.add(new TransactionLogEntry(username, amount));
+            }
+        }
 
         if (tag.contains("withdraw_permissions"))
             _withdrawPermissions = TransactionPermissions.valueOf(tag.getString("withdraw_permissions"));
@@ -88,6 +113,20 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
 
         if (_owner != null) {
             tag.putUUID("owner", _owner);
+        }
+
+        if (_transactionLog != null && !_transactionLog.isEmpty()) {
+            ListTag transactionLogTag = new ListTag();
+
+            for (TransactionLogEntry entry : _transactionLog) {
+                CompoundTag entryTag = new CompoundTag();
+                entryTag.putString("username", entry.username);
+                entryTag.putLong("amount", entry.amount);
+
+                transactionLogTag.add(entryTag);
+            }
+
+            tag.put("transaction_log", transactionLogTag);
         }
 
         tag.putString("withdraw_permissions", _withdrawPermissions.name());
@@ -178,6 +217,34 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
             level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
     }
 
+    public List<TransactionLogEntry> getTransactionLog() {
+        return Collections.unmodifiableList(_transactionLog);
+    }
+
+    /*
+    public TransactionLogEntry getTransactionLogEntry(int idx) {
+        if (_transactionLog == null || _transactionLog.isEmpty())
+            throw new UnsupportedOperationException("Cannot get entry of empty log");
+        if (idx < 0 || idx >= _transactionLog.size())
+            throw new IndexOutOfBoundsException("Log entry index " + idx + " out of bounds for length " + _transactionLog.size() + ".");
+
+        return _transactionLog.get(idx);
+    }
+
+    public int getTransactionLogLength() {
+        return _transactionLog.size();
+    }
+    */
+
+    public void addTransactionLogEntry(TransactionLogEntry entry) {
+        _transactionLog.add(entry);
+
+        // Limit log length
+        while(_transactionLog.size() > TRANSACTION_LOG_LENGTH) {
+            _transactionLog.remove(0);
+        }
+    }
+
     public static <T> void tick(Level level, BlockPos pos, BlockState state, T blockEntity) {
         if (blockEntity instanceof ExperienceObeliskBlockEntity obeliskEntity) {
             //obeliskEntity._experiencePoints = level.random.nextIntBetweenInclusive(1000,9999);
@@ -213,6 +280,9 @@ public class ExperienceObeliskBlockEntity extends BlockEntity implements GeoBloc
         level.playSound(null, getBlockPos(), SoundEvents.PLAYER_LEVELUP, SoundSource.BLOCKS, 1.0f, 1.0f);
 
         level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+
+        // Write log entry
+        addTransactionLogEntry(new TransactionLogEntry(player.getName().getString(), transactionAmount));
 
         ArcaneAuctions.LOGGER.info(
                 player.getName().getString()
